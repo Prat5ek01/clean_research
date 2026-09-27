@@ -27,10 +27,30 @@
     "mannwhitney_p": 5.518826257631651e-26,
     "auroc": 0.26624559411444654
   },
-  "size_stratified_permutation_loo": {
-    "observed_mean_diff": 0.0047412631639520055,
-    "n_perm": 1000,
-    "p_one_sided": 0.08091908091908091
+  "multiproto_silhouette": {
+    "median_nise": 0.35572563707641436,
+    "median_other": 0.3146452801131187,
+    "mean_nise": 0.36219402476201845,
+    "mean_other": 0.33892154062650975,
+    "mannwhitney_p": 0.02452768808890185,
+    "auroc": 0.5721120161149063
+  },
+  "size_stratified_permutation": {
+    "loo_misassign": {
+      "observed_mean_diff_nise_minus_other": 0.0047412631639520055,
+      "n_perm": 1000,
+      "p_two_sided": 0.13586413586413587
+    },
+    "rms_radius": {
+      "observed_mean_diff_nise_minus_other": 0.8389615517448639,
+      "n_perm": 1000,
+      "p_two_sided": 0.000999000999000999
+    },
+    "mean_margin": {
+      "observed_mean_diff_nise_minus_other": -1.000842079351501,
+      "n_perm": 1000,
+      "p_two_sided": 0.000999000999000999
+    }
   },
   "spearman_top_arch_share_vs_loo": {
     "rho": -0.22655213898796817,
@@ -45,5 +65,20 @@
     "6": 6,
     "7": 6
   },
-  "E3b": "E3b: no NISE-like EC has all member embeddings yet (run --write-nise-fasta, then cx_03_embed.py)"
+  "exemplar_gain_by_true_EC_nise_status": {
+    "new392": {
+      "n_nise": 25,
+      "gain_nise": 0.034666666666666665,
+      "n_other": 367,
+      "gain_other": 0.04064054322909909,
+      "mannwhitney_p": 0.5762531764717762
+    },
+    "price149": {
+      "n_nise": 0,
+      "gain_nise": null,
+      "n_other": 149,
+      "gain_other": -0.016554809843400447,
+      "mannwhitney_p": null
+    }
+  }
 }

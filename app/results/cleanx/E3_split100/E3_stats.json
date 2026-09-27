@@ -35,10 +35,22 @@
     "mannwhitney_p": 0.02452768808890185,
     "auroc": 0.5721120161149063
   },
-  "size_stratified_permutation_loo": {
-    "observed_mean_diff": 0.0047412631639520055,
-    "n_perm": 10000,
-    "p_one_sided": 0.07799220077992201
+  "size_stratified_permutation": {
+    "loo_misassign": {
+      "observed_mean_diff_nise_minus_other": 0.0047412631639520055,
+      "n_perm": 10000,
+      "p_two_sided": 0.13708629137086292
+    },
+    "rms_radius": {
+      "observed_mean_diff_nise_minus_other": 0.8389615517448639,
+      "n_perm": 10000,
+      "p_two_sided": 9.999000099990002e-05
+    },
+    "mean_margin": {
+      "observed_mean_diff_nise_minus_other": -1.000842079351501,
+      "n_perm": 10000,
+      "p_two_sided": 9.999000099990002e-05
+    }
   },
   "spearman_top_arch_share_vs_loo": {
     "rho": -0.22655213898796817,

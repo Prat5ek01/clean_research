@@ -1,8 +1,8 @@
 {
   "tuning_set": "new392",
-  "criterion": "macro_true_F1, depth 4, closed subset",
-  "lambda_k1": 0.02,
-  "lambda_k3": 0.02,
+  "criterion": "macro_union_F1, depth 4, closed subset",
+  "lambda_k1": 0.01,
+  "lambda_k3": 0.0,
   "grid": [
     0.0,
     0.01,
