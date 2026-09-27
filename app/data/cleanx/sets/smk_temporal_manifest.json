@@ -1,0 +1,73 @@
+{
+  "snapshot_created_on_or_after": "2022-03-01",
+  "uniprot": {
+    "url": "https://rest.uniprot.org/uniprotkb/search?query=%28reviewed%3Atrue%29+AND+%28date_created%3A%5B2022-03-01+TO+%2A%5D%29&fields=accession%2Cec%2Cdate_created%2Clength%2Cfragment%2Ckeywordid%2Corganism_name%2Cprotein_existence%2Cxref_pfam%2Csequence&format=tsv&compressed=true&size=400",
+    "downloaded_utc": "2026-09-27T16:42:43",
+    "uniprot_release": "2026_03",
+    "uniprot_release_date": "02-September-2026",
+    "bytes": 185520,
+    "query": "(reviewed:true) AND (date_created:[2022-03-01 TO *])",
+    "fields": [
+      "accession",
+      "ec",
+      "date_created",
+      "length",
+      "fragment",
+      "keywordid",
+      "organism_name",
+      "protein_existence",
+      "xref_pfam",
+      "sequence"
+    ],
+    "max_records": 400
+  },
+  "enzyme_dat": {
+    "url": "https://ftp.expasy.org/databases/enzyme/enzyme.dat",
+    "downloaded_utc": "2026-09-27T16:42:41",
+    "uniprot_release": null,
+    "uniprot_release_date": null,
+    "bytes": 9595340
+  },
+  "enzyme_release": "Release of 02-Sep-2026",
+  "raw_records": 400,
+  "excluded": {
+    "fragment": 0,
+    "length_outside_30-1022": 71,
+    "accession_in_CLEAN_training_csv": 0,
+    "accession_in_legacy_benchmarks": 0,
+    "sequence_identical_to_training": 0,
+    "duplicate_sequence_within_new_entries": 1,
+    "partial_EC_only(excluded)": 25,
+    "no_EC_but_enzyme_class_keyword(excluded)": 6
+  },
+  "n_enzymes": 86,
+  "n_cal": 35,
+  "n_test": 51,
+  "n_nonenzyme": 211,
+  "n_novel_EC_proteins": 4,
+  "tiers": {
+    "cal": {
+      "common": 26,
+      "rare": 5,
+      "unseen": 2,
+      "very_rare": 2
+    },
+    "test": {
+      "common": 38,
+      "rare": 8,
+      "unseen": 2,
+      "very_rare": 3
+    }
+  },
+  "params": {
+    "snapshot": "2022-03-01",
+    "min_len": 30,
+    "max_len": 1022,
+    "cal_frac": 0.4,
+    "nonenz_max": 2000,
+    "seed": 20260927,
+    "with_pfam": false,
+    "smoke": true,
+    "force": false
+  }
+}

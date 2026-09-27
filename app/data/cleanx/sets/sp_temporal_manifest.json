@@ -1,0 +1,75 @@
+{
+  "snapshot_created_on_or_after": "2022-03-01",
+  "uniprot": {
+    "url": "https://rest.uniprot.org/uniprotkb/stream?query=%28reviewed%3Atrue%29+AND+%28date_created%3A%5B2022-03-01+TO+%2A%5D%29&fields=accession%2Cec%2Cdate_created%2Clength%2Cfragment%2Ckeywordid%2Corganism_name%2Cprotein_existence%2Cxref_pfam%2Csequence&format=tsv&compressed=true",
+    "downloaded_utc": "2026-09-27T16:43:37",
+    "uniprot_release": "2026_03",
+    "uniprot_release_date": "02-September-2026",
+    "bytes": 2939015,
+    "query": "(reviewed:true) AND (date_created:[2022-03-01 TO *])",
+    "fields": [
+      "accession",
+      "ec",
+      "date_created",
+      "length",
+      "fragment",
+      "keywordid",
+      "organism_name",
+      "protein_existence",
+      "xref_pfam",
+      "sequence"
+    ],
+    "max_records": null
+  },
+  "enzyme_dat": {
+    "url": "https://ftp.expasy.org/databases/enzyme/enzyme.dat",
+    "downloaded_utc": "2026-09-27T16:42:41",
+    "uniprot_release": null,
+    "uniprot_release_date": null,
+    "bytes": 9595340
+  },
+  "enzyme_release": "Release of 02-Sep-2026",
+  "raw_records": 8920,
+  "excluded": {
+    "fragment": 176,
+    "length_outside_30-1022": 846,
+    "accession_in_CLEAN_training_csv": 2,
+    "accession_in_legacy_benchmarks": 4,
+    "sequence_identical_to_training": 29,
+    "duplicate_sequence_within_new_entries": 113,
+    "partial_EC_only(excluded)": 1488,
+    "no_EC_but_enzyme_class_keyword(excluded)": 105
+  },
+  "n_enzymes": 2099,
+  "n_cal": 839,
+  "n_test": 1260,
+  "n_nonenzyme": 2000,
+  "n_novel_EC_proteins": 640,
+  "tiers": {
+    "cal": {
+      "common": 422,
+      "rare": 82,
+      "singleton": 45,
+      "unseen": 256,
+      "very_rare": 34
+    },
+    "test": {
+      "common": 634,
+      "rare": 122,
+      "singleton": 68,
+      "unseen": 384,
+      "very_rare": 52
+    }
+  },
+  "params": {
+    "snapshot": "2022-03-01",
+    "min_len": 30,
+    "max_len": 1022,
+    "cal_frac": 0.4,
+    "nonenz_max": 2000,
+    "seed": 20260927,
+    "with_pfam": true,
+    "smoke": false,
+    "force": false
+  }
+}

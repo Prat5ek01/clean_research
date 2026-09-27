@@ -1,0 +1,11 @@
+{
+  "url": "https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cec%2Cdate_created%2Cxref_pfam%2Clength&format=tsv&query=%28reviewed%3Atrue%29%20AND%20%28ec%3A%2A%29",
+  "downloaded_utc": "2026-09-27T16:23:00",
+  "uniprot_release": "2026_03",
+  "uniprot_release_date": "02-September-2026",
+  "bytes": 3055696,
+  "query": "(reviewed:true) AND (ec:*)",
+  "fields": ["accession", "ec", "date_created", "xref_pfam", "length"],
+  "max_records": null,
+  "note": "stream download run 2026-09-27 during setup; release read from the API header the same day"
+}

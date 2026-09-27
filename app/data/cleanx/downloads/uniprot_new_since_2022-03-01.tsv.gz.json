@@ -1,0 +1,21 @@
+{
+  "url": "https://rest.uniprot.org/uniprotkb/stream?query=%28reviewed%3Atrue%29+AND+%28date_created%3A%5B2022-03-01+TO+%2A%5D%29&fields=accession%2Cec%2Cdate_created%2Clength%2Cfragment%2Ckeywordid%2Corganism_name%2Cprotein_existence%2Cxref_pfam%2Csequence&format=tsv&compressed=true",
+  "downloaded_utc": "2026-09-27T16:43:37",
+  "uniprot_release": "2026_03",
+  "uniprot_release_date": "02-September-2026",
+  "bytes": 2939015,
+  "query": "(reviewed:true) AND (date_created:[2022-03-01 TO *])",
+  "fields": [
+    "accession",
+    "ec",
+    "date_created",
+    "length",
+    "fragment",
+    "keywordid",
+    "organism_name",
+    "protein_existence",
+    "xref_pfam",
+    "sequence"
+  ],
+  "max_records": null
+}

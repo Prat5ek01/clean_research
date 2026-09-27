@@ -1,0 +1,5 @@
+app/.venv/
+app/data/pretrained/
+app/data/split100.csv
+__pycache__/
+*.pyc
