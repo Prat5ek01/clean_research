@@ -1,5 +1,10 @@
 # Research Investigation: Novel, Publishable Extensions to CLEAN
 
+> **Superseded (2026-09-27) by [`PUBLICATION_PLAN.md`](PUBLICATION_PLAN.md).** Kept for the
+> literature survey. Its direction ranking is outdated: the chemistry-weighted metric overlaps
+> EC-Bench (2026), the training-space misassignment pilot was a multi-EC artifact, and later
+> experiments added the metric-gameability and temporal-benchmark results. See PUBLICATION_PLAN §15.
+
 > Companion to [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) (architecture/repo map) and
 > [`app/AUDIT_NOTES.md`](app/AUDIT_NOTES.md) + [`app/audit_out/`](app/audit_out/) (this repo's own
 > evaluation findings). Written 2026-09-27 from (1) a full read of this repo's source/data/audit

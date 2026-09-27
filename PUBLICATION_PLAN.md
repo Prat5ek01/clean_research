@@ -76,7 +76,7 @@ better-resourced groups (§3).
 | 10 | **Exemplar trade-off** (dev + confirmatory) | Exemplar − centroid micro-F1: New-392 +0.035 [+0.002, +0.068]; Price-149 −0.012 [−0.048, +0.024]. By tier on Price-149: common **+0.062** (p=0.016), rare −0.085 (p=0.034), very rare **−0.132** (p<0.001), singleton −0.043 (p=0.024). New-392 common +0.059 (p=0.004) | `results/cleanx/E2_split100/E2_deltas.csv` ✅ |
 | 11 | Local-mean (3-NN) inference | Union-macro F1: New-392 +0.032 [+0.007, +0.056]; Price-149 +0.006 (ns). K-means sub-prototypes slightly *worse* (negative result) | E2 ✅ |
 | 12 | Homology baseline | Best local-alignment hit: ties CLEAN on New-392 (micro +0.007, ns), clearly worse on low-identity Price-149 (−0.074, p=0.038; union-macro −0.080, p=0.001) | E2 ✅ |
-| 13 | NISE-like ECs | 7.3% of analysed ECs have members in ≥ 2 non-homologous Pfam-clan groups, consistent with the literature estimate of up to ~10% of reactions (Omelchenko et al. 2010). Training-space centroid misassignment only weakly higher (see E3 summary) | `results/cleanx/E3_split100/` ✅ |
+| 13 | **NISE-like ECs are dispersed in CLEAN space** | 183 of 2,493 ECs (7.3%) have members in ≥ 2 non-homologous Pfam-clan groups, consistent with the literature estimate of up to ~10% of reactions (Omelchenko et al. 2010) and with its class profile (mostly oxidoreductases 55 and hydrolases 54). **Controlling for EC size** (10,000 size-stratified permutations): within-EC RMS radius +0.84 (median 4.14 vs 3.44; AUROC 0.80) and margin to the nearest other centroid −1.00, both p < 10⁻⁴. Training-member misassignment is not significant after size control (p = 0.14). Test-set link on New-392 underpowered (25 NISE proteins; gain 0.035 vs 0.041, p = 0.58) | `results/cleanx/E3_split100/E3_stats.json` ✅ |
 | 14 | **Tier-dependent overconfidence** (*pilot*, New-392 halves) | CLEAN GMM confidence, by predicted-EC tier: common ECE 0.18 (conf 0.64, acc 0.64); rare 0.36 (0.74 vs 0.48); very rare 0.50 (0.84 vs 0.34); singleton 0.49 (0.85 vs 0.36). Tier-conditional isotonic calibration lowers ECE in every tier | `results/cleanx/E4_smoke/` ✅ (pilot) |
 | 15 | Certification limits (*pilot*) | Even CLEAN's 20 most confident predictions contain 2 errors. Smallest certifiable risk (centroid): common 0.35, rare 0.60, very rare 0.80, singleton 0.95 (tiny n; the temporal CAL split will tighten these) | E4 smoke ✅ (pilot) |
 
@@ -111,7 +111,7 @@ Re-run these searches in the week before submission; this sub-field moves monthl
 |---|---|---|---|
 | RQ1 How much of CLEAN's error does the reported metric see, and can it be gamed? | **H1** Support-weighted P/F1 ignore most FPs and rise under over-prediction; micro, union-macro and per-protein F1 do not | Share of FPs outside the test label space; score vs number of ECs predicted (1–10) | ✅ verified on legacy sets; ⏳ repeat on temporal test |
 | RQ2 How does CLEAN generalise past 2022? | **H2** Exact-EC performance falls steeply with rarity tier and identity; a large share of new enzymes carry unseen ECs | Micro/union-macro F1 by depth × tier × identity bin; unseen-EC share | unseen share ✅ (30%); ⏳ performance |
-| RQ3 Is one centroid per EC the right way to use CLEAN's embedding? | **H3a (secondary)** Exemplar 1-NN helps common and hurts rare tiers (replicates Price-149). **H3b (primary)** Class-balanced density scoring `balanced3` (λ tuned on CAL only) beats centroids on union-macro F1. **H3c (exploratory)** Exemplar gains concentrate in NISE-like ECs | **Primary:** union-macro F1 at EC depth 4, `balanced3` − `centroid`, SP-temporal TEST, seen-EC proteins, paired bootstrap (B=2000), two-sided α=0.05. **Key secondary:** micro-F1, same comparison | ⏳ |
+| RQ3 Is one centroid per EC the right way to use CLEAN's embedding? | **H3a (secondary)** Exemplar 1-NN helps common and hurts rare tiers (replicates Price-149). **H3b (primary)** Class-balanced density scoring `balanced3` (λ tuned on CAL only) beats centroids on union-macro F1. **H3c (mechanism)** NISE-like ECs are more dispersed in CLEAN space (✅ size-controlled, p < 10⁻⁴) and exemplar gains concentrate in them (⏳ needs temporal power) | **Primary:** union-macro F1 at EC depth 4, `balanced3` − `centroid`, SP-temporal TEST, seen-EC proteins, paired bootstrap (B=2000), two-sided α=0.05. **Key secondary:** micro-F1, same comparison | ⏳ (H3c dispersion ✅) |
 | RQ4 Is CLEAN's confidence reliable, and can abstention be certified per tier? | **H4a** GMM-confidence ECE rises from common to singleton predicted tiers. **H4b** Per-tier (Mondrian) SGR thresholds keep realized risk ≤ α in every tier on TEST; one global threshold does not. **H4c** The smallest certifiable risk differs by tier | ECE by predicted tier; realized selective risk and coverage per tier at α ∈ {0.1, 0.2, 0.3}; min certifiable risk; abstention on unseen-EC enzymes and non-enzymes | pilot ✅; ⏳ |
 
 ### Decision gates (what each outcome means for the paper)
@@ -171,6 +171,18 @@ errors.
 | E4 | Reliability (RQ4) | `cx_07_reliability.py` | pilot ✅; ⏳ full | ~5 min | calibration, risk control, min certifiable risk, open set |
 | F | Figures | `cx_08_figures.py` | partial ✅ | 30 s | PNG + PDF + CSV twins |
 
+**How to run (details in the RUNBOOK):** from `app\`, run `.\cx_smoke.bat` (all 7 smoke tests,
+≈2 min), then `.\cx.bat cx_03_embed.py --verify-only` (ESM-1b equivalence, needs ~8–10 GB free
+RAM), then `.\cx_full.bat` (≈2–4 h, resumable).
+
+**Verification done on 2026-09-27:** `cx_smoke.bat` → ALL 7 SMOKE TESTS PASSED; an integration
+test with synthetic embeddings (temp folders only) exercised every temporal-only path (unseen ECs,
+EC-transfer mapping, λ tuning on CAL, non-enzyme open set, reliability figures) → 5/5 PASS; unit
+tests of the embedding orchestration (PASS and FAIL branches), the MMseqs2 parser and E3b → PASS.
+Bugs found and fixed by these tests: an E3 summary key error and figure crashes on empty panels.
+**Not executed here:** loading ESM-1b itself (only ~4 GB RAM free); its equivalence test is
+Command 2 in the RUNBOOK and gates the full run.
+
 **Statistics:** paired non-parametric bootstrap over proteins (B = 2,000; seed 20260927) for all
 method differences; 95% percentile CIs; two-sided p. Per-tier secondary tests are Holm-corrected
 across the 4 tiers. E3 uses a size-stratified permutation test (10,000 permutations). SGR uses
@@ -198,6 +210,10 @@ false positives**.
    MMseqs2 confirmation recommended); PE-level sensitivity (Swiss-Prot "evidence at protein level":
    1,663 of 2,099 enzymes). Per-EC cap sensitivity if one EC dominates.
 5. **No tuning on anything that is later reported as a test result.**
+6. **Recorded endpoint change (2026-09-27, before any SP-temporal TEST result existed):** the
+   primary metric and the λ-tuning criterion were switched from true-label macro-F1 to
+   union-label macro-F1 after E1 showed true-label macro-F1 also rises under over-prediction
+   (0.48 → 0.58 on New-392). State this in the Methods; it strengthens the protocol.
 
 ---
 

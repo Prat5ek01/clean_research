@@ -57,15 +57,17 @@ def fig_blind_spot():
         return print("  skip fig1: run cx_01_audit.py")
     d = pd.read_csv(p)
     d = d[d.method == "clean_maxsep"].copy()
+    if d.empty:
+        return print("  skip fig1: no clean_maxsep rows in E1_blind_spot.csv")
     d["label"] = d.dataset.map(DATASET).fillna(d.dataset)
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 2.4), gridspec_kw={"wspace": 0.45})
     y = np.arange(len(d))
     h = 0.36
-    a1.barh(y - h / 2 - 0.01, d["weighted_P(reported)"], height=h, color="#2a78d6", label="Reported (support-weighted)")
-    a1.barh(y + h / 2 + 0.01, d["micro_P"], height=h, color="#eb6834", label="All predictions counted (micro)")
+    a1.barh(y + h / 2 + 0.01, d["weighted_P(reported)"], height=h, color="#2a78d6", label="Reported (support-weighted)")
+    a1.barh(y - h / 2 - 0.01, d["micro_P"], height=h, color="#eb6834", label="All predictions counted (micro)")
     for yy, v1, v2 in zip(y, d["weighted_P(reported)"], d["micro_P"]):
-        a1.text(v1 + 0.01, yy - h / 2, f"{v1:.3f}", va="center", color=INK2, fontsize=7)
-        a1.text(v2 + 0.01, yy + h / 2, f"{v2:.3f}", va="center", color=INK2, fontsize=7)
+        a1.text(v1 + 0.01, yy + h / 2, f"{v1:.3f}", va="center", color=INK2, fontsize=7)
+        a1.text(v2 + 0.01, yy - h / 2, f"{v2:.3f}", va="center", color=INK2, fontsize=7)
     a1.set_yticks(y, d.label)
     a1.set_xlim(0, 0.75)
     a1.set_xlabel("Precision at EC level 4")
@@ -97,6 +99,8 @@ def fig_tiers(backbone="split100"):
         return print("  skip fig2: run cx_05_geometry.py")
     t = m[(m.subset_type == "true_tier") & (m.depth == 4) & m.method.isin(["centroid", "exemplar", "homology_tophit"])]
     sets = [s for s in DATASET if s in set(t.dataset)]
+    if not sets:
+        return print("  skip fig2: no known dataset in E2 results")
     fig, axes = plt.subplots(1, len(sets), figsize=(2.5 * len(sets), 2.5), sharey=True, squeeze=False)
     rows = []
     for ax, s in zip(axes[0], sets):
@@ -124,6 +128,8 @@ def fig_identity(backbone="split100"):
         return print("  skip fig3: needs cx_04_identity.py then cx_05_geometry.py")
     t = m[(m.subset_type == "identity") & (m.depth == 4)]
     sets = [s for s in DATASET if s in set(t.dataset)]
+    if not sets:
+        return print("  skip fig3: no known dataset with identity bins in E2 results")
     fig, axes = plt.subplots(1, len(sets), figsize=(2.5 * len(sets), 2.4), sharey=True, squeeze=False)
     rows = []
     for ax, s in zip(axes[0], sets):
@@ -151,6 +157,8 @@ def fig_ablation(backbone="split100"):
         return print("  skip figS1: run cx_05_geometry.py")
     rows = []
     sets = [s for s in DATASET if s in set(m.dataset)]
+    if not sets:
+        return print("  skip figS1: no known dataset in E2 results")
     fig, axes = plt.subplots(1, len(sets), figsize=(2.5 * len(sets), 2.4), sharey=True, squeeze=False)
     for ax, s in zip(axes[0], sets):
         g = m[(m.dataset == s) & (m.subset_type == ("closed" if "closed" in set(m[m.dataset == s].subset_type) else "all"))]
@@ -183,20 +191,24 @@ def fig_nise(backbone="split100"):
         rows.append({"dataset": s, "group": "NISE-like EC", "mean_gain": v["gain_nise"], "n": v["n_nise"]})
         rows.append({"dataset": s, "group": "other EC", "mean_gain": v["gain_other"], "n": v["n_other"]})
     d = pd.DataFrame(rows).dropna()
-    sets = [s for s in DATASET if s in set(d.dataset)]
-    fig, ax = plt.subplots(figsize=(3.4, 2.4))
-    x = np.arange(len(sets))
+    both = [s for s in DATASET if s in set(d.dataset) and d[(d.dataset == s) & (d.n > 0)].group.nunique() == 2]
+    if not both:
+        return print("  skip fig4: no dataset has proteins of both NISE-like and other ECs")
+    d = d[d.dataset.isin(both)]
+    fig, ax = plt.subplots(figsize=(1.6 + 1.3 * len(both), 2.4))
+    x = np.arange(len(both))
     for k, (grp, col) in enumerate((("NISE-like EC", "#eb6834"), ("other EC", "#2a78d6"))):
-        v = [d[(d.dataset == s) & (d.group == grp)].mean_gain.mean() for s in sets]
-        n = [d[(d.dataset == s) & (d.group == grp)].n.sum() for s in sets]
+        v = [d[(d.dataset == s) & (d.group == grp)].mean_gain.mean() for s in both]
         ax.bar(x + (k - 0.5) * 0.38, v, width=0.35, color=col, label=grp)
-        for xi, vi, ni in zip(x + (k - 0.5) * 0.38, v, n):
-            ax.text(xi, vi + (0.004 if vi >= 0 else -0.004), f"n={ni}", ha="center",
-                    va="bottom" if vi >= 0 else "top", fontsize=6.5, color=INK2)
     ax.axhline(0, color=AXIS, linewidth=0.8)
-    ax.set_xticks(x, [DATASET[s] for s in sets])
+    ticks = []
+    for s in both:
+        n1 = int(d[(d.dataset == s) & (d.group == "NISE-like EC")].n.sum())
+        n2 = int(d[(d.dataset == s) & (d.group == "other EC")].n.sum())
+        ticks.append(f"{DATASET[s]}\nn={n1} / {n2}")
+    ax.set_xticks(x, ticks, fontsize=7)
     ax.set_ylabel("Per-protein F1 gain\n(exemplar - centroid)")
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=2, fontsize=7)
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.02), ncol=2, fontsize=7)
     save(fig, "fig4_nise_gain", d)
 
 
@@ -211,6 +223,8 @@ def fig_reliability():
     mond = MondrianIso(50).fit(cal_e.score, cal_e.correct4, cal_e.pred_tier)
     te_e["conf"] = mond.predict(te_e.score, te_e.pred_tier)
     tiers = [t for t in TIERS if (te_c.pred_tier == t).sum() >= 10]
+    if not tiers:
+        return print("  skip fig5-7: no predicted-EC tier has >= 10 test proteins")
     fig, axes = plt.subplots(1, len(tiers), figsize=(2.1 * len(tiers), 2.3), sharey=True, squeeze=False)
     rows = []
     for ax, t in zip(axes[0], tiers):

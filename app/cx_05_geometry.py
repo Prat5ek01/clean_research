@@ -114,7 +114,7 @@ def main():
         Q = idx.embed(ev.ids)
         tiers = ev.tiers(idx)
         closed = [i for i in ev.ids if tiers[i] != "unseen"]
-        idbin = ev.identity()
+        idbin = ev.identity() if args.backbone == "split100" else None
         methods, dnn = {}, None
         for m in args.methods:
             S = scores_for(m, Q, idx, mp, lam.get(m))

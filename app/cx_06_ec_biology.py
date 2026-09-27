@@ -275,16 +275,19 @@ def main():
 
     with open(out / "E3_stats.json", "w", encoding="utf-8") as fh:
         json.dump(res, fh, indent=2, default=str)
-    s = res["loo_misassign"]
-    pm = res["size_stratified_permutation_loo"]
     text = (f"# E3 summary ({args.backbone})\n\n"
             f"- ECs analysed (n>={args.min_n}, >={args.min_pfam_frac:.0%} of members with Pfam): {res['n_EC_analysed']}; "
-            f"NISE-like (>=2 non-homologous Pfam-clan groups): {res['n_nise_like']} ({res['share_nise_like']:.1%})\n"
-            f"- training-space LOO centroid misassignment, NISE-like vs other: median {fmt(s['median_nise'])} vs "
-            f"{fmt(s['median_other'])}, mean {fmt(s['mean_nise'])} vs {fmt(s['mean_other'])}, "
-            f"Mann-Whitney p={s['mannwhitney_p']:.3g}, AUROC {fmt(s['auroc'])}; size-stratified permutation "
-            f"p={pm['p_one_sided']:.4g}\n"
-            f"- Spearman(top Pfam-architecture share, misassignment) rho={res['spearman_top_arch_share_vs_loo']['rho']:.3f}\n")
+            f"NISE-like (>=2 non-homologous Pfam-clan groups): {res['n_nise_like']} ({res['share_nise_like']:.1%}); "
+            f"by EC class {res['nise_like_by_EC_class']}\n")
+    for col, label in (("rms_radius", "within-EC spread (RMS radius)"),
+                       ("mean_margin", "margin to nearest other centroid"),
+                       ("loo_misassign", "LOO centroid misassignment")):
+        s, pm = res.get(col), res["size_stratified_permutation"][col]
+        if s:
+            text += (f"- {label}, NISE-like vs other: median {fmt(s['median_nise'])} vs {fmt(s['median_other'])}, "
+                     f"Mann-Whitney p={s['mannwhitney_p']:.3g}, AUROC {fmt(s['auroc'])}; size-stratified permutation "
+                     f"(mean diff {pm['observed_mean_diff_nise_minus_other']:+.3f}) p={pm['p_two_sided']:.4g}\n")
+    text += f"- Spearman(top Pfam-architecture share, misassignment) rho={res['spearman_top_arch_share_vs_loo']['rho']:.3f}\n"
     for ds, v in res.get("exemplar_gain_by_true_EC_nise_status", {}).items():
         text += (f"- {ds}: exemplar-minus-centroid per-protein F1 gain, true EC NISE-like "
                  f"{v['gain_nise']} (n={v['n_nise']}) vs other {v['gain_other']} (n={v['n_other']}), "
