@@ -93,7 +93,8 @@ def main():
                               "micro_P": r["micro_P"], "micro_F1": r["micro_F1"], "macro_true_F1": r["macro_true_F1"],
                               "macro_union_F1": r["macro_union_F1"], "recall": r["micro_R"],
                               "FP_outside_true_labelset": r["fp_outside_true_labelset"], "FP": r["fp"]})
-        L.write_pred_csv(config.CX_PREDS / f"{name}_{args.backbone}_centroid_maxsep.csv", preds)
+        L.write_pred_csv(config.CX_PREDS / f"{name}_{args.backbone}_centroid_maxsep{'_smoke' if args.smoke else ''}.csv",
+                         preds)
         methods = {"clean_maxsep": ev.score_labels(preds)}
         pv = config.APP_DIR / "results" / "new_pvalue.csv"
         if name == "new392" and args.backbone == "split100" and pv.is_file():

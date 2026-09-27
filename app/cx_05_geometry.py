@@ -121,7 +121,8 @@ def main():
             if m == "exemplar":
                 dnn = S.min(1)
             preds = maxsep_predict(S, idx.ecs, ev.ids)
-            L.write_pred_csv(config.CX_PREDS / f"{name}_{args.backbone}_{m}_maxsep.csv", preds)
+            L.write_pred_csv(config.CX_PREDS / f"{name}_{args.backbone}_{m}_maxsep{'_smoke' if args.smoke else ''}.csv",
+                             preds)
             methods[m] = ev.score_labels(preds)
         hom = config.CX_PREDS / f"{name}_homology_tophit.csv"
         if hom.is_file() and args.backbone == "split100":
