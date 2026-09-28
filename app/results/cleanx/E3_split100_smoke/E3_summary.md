@@ -9,3 +9,4 @@
 - Spearman(top Pfam-architecture share, misassignment) rho=-0.227
 - new392: exemplar-minus-centroid per-protein F1 gain, true EC NISE-like 0.034666666666666665 (n=25) vs other 0.04064054322909909 (n=367), Mann-Whitney p=0.5762531764717762
 - price149: exemplar-minus-centroid per-protein F1 gain, true EC NISE-like None (n=0) vs other -0.016554809843400447 (n=149), Mann-Whitney p=None
+- sp_temporal_test: exemplar-minus-centroid per-protein F1 gain, true EC NISE-like 0.07252326217843459 (n=87) vs other 0.061608277364312944 (n=787), Mann-Whitney p=0.35920334015892064

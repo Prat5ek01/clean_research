@@ -105,6 +105,13 @@
       "n_other": 149,
       "gain_other": -0.016554809843400447,
       "mannwhitney_p": null
+    },
+    "sp_temporal_test": {
+      "n_nise": 87,
+      "gain_nise": 0.07252326217843459,
+      "n_other": 787,
+      "gain_other": 0.061608277364312944,
+      "mannwhitney_p": 0.35920334015892064
     }
   }
 }

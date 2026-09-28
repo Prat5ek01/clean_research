@@ -1,0 +1,27 @@
+kind,label,dataset,subset,method,metric,n,delta_obs,ci_lo,ci_hi,p_two_sided
+primary,Size-balanced 3-NN,sp_temporal_test,closed,balanced3,macro_union_F1,876,0.0431489185863191,0.0297940897094544,0.0600174859144073,0.0
+primary,Size-balanced 3-NN,sp_temporal_test,closed,balanced3,micro_F1,876,0.0471655770292412,0.0317614122197049,0.0626301387480979,0.0
+sensitivity,cluster bootstrap over ECs,sp_temporal_test,closed|cluster_bootstrap_EC,balanced3,macro_union_F1,876,0.0431489185863191,0.0297575717038743,0.0619084670561442,0.0
+sensitivity,cluster bootstrap over ECs,sp_temporal_test,closed|cluster_bootstrap_EC,balanced3,micro_F1,876,0.0471655770292412,0.0313633583355644,0.0627950753395837,0.0
+sensitivity,at most 5 proteins per EC,sp_temporal_test,closed_capped5,balanced3,macro_union_F1,776,0.0409017743480593,0.0277046722956976,0.0589131201304894,0.0
+sensitivity,at most 5 proteins per EC,sp_temporal_test,closed_capped5,balanced3,micro_F1,776,0.0455811825004576,0.029454179063381,0.0631203485445655,0.0
+sensitivity,<50% identity to the CAL split,sp_temporal_test,closed_cal_disjoint,balanced3,macro_union_F1,649,0.0448936808938302,0.0301509769682098,0.0646191771630197,0.0
+sensitivity,<50% identity to the CAL split,sp_temporal_test,closed_cal_disjoint,balanced3,micro_F1,649,0.0476026564798272,0.0288937470880777,0.0660282323780694,0.0
+sensitivity,experimental evidence only (PE1),sp_temporal_test,closed_PE1,balanced3,macro_union_F1,640,0.0354893702660545,0.021366095160362,0.0528070704438074,0.0
+sensitivity,experimental evidence only (PE1),sp_temporal_test,closed_PE1,balanced3,micro_F1,640,0.0435062574740934,0.0252214421514989,0.0611628019702012,0.0
+sensitivity,split70 backbone,sp_temporal_test,closed,balanced3,macro_union_F1,864,0.0364187249879545,0.0217822398214872,0.0515283549949999,0.0
+sensitivity,split70 backbone,sp_temporal_test,closed,balanced3,micro_F1,864,0.0411459250132019,0.0256446015300191,0.0571178857014421,0.0
+descriptive,Exemplar (1-NN),sp_temporal_test,closed,exemplar,macro_union_F1,876,0.0786814321862416,0.0590484883209842,0.0927651542879405,0.0
+descriptive,Exemplar (1-NN),sp_temporal_test,closed,exemplar,micro_F1,876,0.0617288714205718,0.0435366132523978,0.0796771765012144,0.0
+descriptive,3-NN mean,sp_temporal_test,closed,kmean3,macro_union_F1,876,0.06254980569373,0.0481027455232634,0.0788952338250714,0.0
+descriptive,3-NN mean,sp_temporal_test,closed,kmean3,micro_F1,876,0.0601091231428723,0.0437459527140271,0.0766976635561709,0.0
+descriptive,Size-balanced 1-NN,sp_temporal_test,closed,balanced1,macro_union_F1,876,0.0546122854999187,0.0378711755775407,0.0706128059035421,0.0
+descriptive,Size-balanced 1-NN,sp_temporal_test,closed,balanced1,micro_F1,876,0.0516549105765338,0.0339060908416411,0.0685209161759392,0.0
+descriptive,Multi-prototype,sp_temporal_test,closed,multiproto,macro_union_F1,876,0.0072988686750831,-0.004877166643638,0.0158349137906732,0.279
+descriptive,Multi-prototype,sp_temporal_test,closed,multiproto,micro_F1,876,0.0015261230883002,-0.0092917465426801,0.0115715875942579,0.768
+descriptive,BLASTp top hit,sp_temporal_test,closed,homology_tophit,macro_union_F1,876,0.1107484911619366,0.0870187844292653,0.1342138884802088,0.0
+descriptive,BLASTp top hit,sp_temporal_test,closed,homology_tophit,micro_F1,876,0.0931592430158717,0.0703022384099269,0.1159961451218147,0.0
+other_set,New-392 (development set),new392,closed,balanced3,macro_union_F1,392,0.0254290284479885,-1.0046339710883705e-06,0.0463956392503566,0.05
+other_set,New-392 (development set),new392,closed,balanced3,micro_F1,392,0.0183222733379472,-0.0074518271535114,0.0446033999692618,0.166
+other_set,Price-149,price149,closed,balanced3,macro_union_F1,149,0.0076162914212365,-0.0159113357492987,0.026619246505497,0.543
+other_set,Price-149,price149,closed,balanced3,micro_F1,149,0.0047112981244717,-0.020431556539503,0.0321870855663651,0.738
