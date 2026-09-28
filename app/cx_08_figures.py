@@ -1,4 +1,4 @@
-"""Paper figures from the E1-E4 outputs. Each figure is written as PNG (300 dpi) + PDF, with a CSV
+"""Paper figures from the E1-E6 outputs. Each figure is written as PNG (300 dpi) + PDF, with a CSV
 of exactly the plotted numbers next to it. Figures whose inputs do not exist yet are skipped."""
 import argparse
 import json
@@ -286,6 +286,118 @@ def fig_reliability():
             save(fig, "fig7_tier_risk_control", r)
 
 
+def _pick(files, *tags):
+    """First results folder among tags that holds every file in files (a partial or unrelated folder is skipped)."""
+    for t in tags:
+        if all((config.CX_RESULTS / t / f).is_file() for f in files):
+            return t
+    return None
+
+
+def fig_ecbench_rescoring():
+    """E5: reported (support-weighted) vs micro F1 for EC-Bench's 16 methods, and inflation vs ECs predicted."""
+    tag = _pick(("E5_cards.csv",), "E5", "E5_pilot")
+    if tag is None:
+        return print("  skip fig8: run cx_09_evalcard.py (or --pilot)")
+    c = pd.read_csv(config.CX_RESULTS / tag / "E5_cards.csv", dtype={"regime": str})
+    ds = "test" if tag == "E5" else "price149"
+    g = c[(c.source == "ecbench") & (c.dataset == ds) & (c.regime == "100") & (c.depth == 4) &
+          (c.variant == "as_published")].copy()  # all methods, as in the pre-registered S4
+    if g.empty:
+        return print(f"  skip fig8: no EC-Bench rows for {ds} in {tag}")
+    g = g.sort_values("reported_ECBench_F1")
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 3.0), gridspec_kw={"wspace": 0.55, "width_ratios": [1.15, 1]})
+    y = np.arange(len(g))
+    for yy, r, m in zip(y, g.reported_ECBench_F1, g.u_micro_F1):
+        a1.plot([r, m], [yy, yy], color=AXIS, linewidth=1.0, zorder=1)
+    a1.scatter(g.reported_ECBench_F1, y, s=22, color="#2a78d6", marker="o", zorder=3,
+               edgecolors="white", linewidths=0.6, label="Reported (support-weighted)")
+    a1.scatter(g.u_micro_F1, y, s=22, color="#eb6834", marker="s", zorder=3,
+               edgecolors="white", linewidths=0.6, label="Every FP counted (micro)")
+    a1.set_yticks(y, g.method, fontsize=6.5)
+    a1.set_xlabel("F1 at EC level 4")
+    a1.set_xlim(0, max(0.05, float(max(g.reported_ECBench_F1.max(), g.u_micro_F1.max()))) * 1.12)
+    a1.grid(axis="x"); a1.grid(axis="y", visible=False)
+    a1.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=1, fontsize=6.5)
+    infl = g.reported_ECBench_F1 - g.u_micro_F1
+    a2.axhline(0, color=AXIS, linewidth=0.8)
+    a2.scatter(g.mean_pred_labels, infl, s=24, color="#2a78d6", marker="o", edgecolors="white", linewidths=0.6)
+    for _, r in g.assign(infl=infl).sort_values("infl", ascending=False).head(3).iterrows():
+        a2.annotate(r.method, (r.mean_pred_labels, r.infl), xytext=(4, 2), textcoords="offset points",
+                    fontsize=6, color=INK2)
+    from scipy.stats import spearmanr
+    rho = spearmanr(g.mean_pred_labels, infl)[0]
+    a2.text(0.02, 0.97, f"Spearman rho = {rho:.2f} (n = {len(g)} methods)", transform=a2.transAxes,
+            va="top", fontsize=6.5, color=INK2)
+    a2.set_xlabel("Mean ECs predicted per protein")
+    a2.set_ylabel("Reported F1 - micro F1")
+    title = "EC-Bench test set" if ds == "test" else "EC-Bench Price-149 (pilot)"
+    fig.suptitle(f"{title}, models trained on the 100% clustering", fontsize=8, color=INK, y=1.08)
+    name = "fig8_ecbench_rescoring" if tag == "E5" else "figS2_ecbench_rescoring_pilot"
+    save(fig, name, g.assign(inflation=infl)[["method", "reported_ECBench_F1", "u_micro_F1", "u_macro_union_F1",
+                                              "mean_pred_labels", "inflation", "fp", "fp_invisible"]])
+
+
+def fig_cert_budget():
+    """E6: calibration proteins needed to certify selective risk, universally and per predicted tier."""
+    tag = _pick(("E6_nstar_grid.csv", "E6_tier_budget.csv"), "E6", "E6_pilot")
+    if tag is None:
+        return print("  skip fig9: run cx_10_certbudget.py (or --pilot)")
+    grid = pd.read_csv(config.CX_RESULTS / tag / "E6_nstar_grid.csv")
+    bud = pd.read_csv(config.CX_RESULTS / tag / "E6_tier_budget.csv")
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 2.7), gridspec_kw={"wspace": 0.4})
+    styles = [(0.1, "#2a78d6", "o"), (0.2, "#eb6834", "s"), (0.3, "#1baf7a", "^")]
+    rows = []
+    for a, col, mk in styles:
+        g = grid[(np.isclose(grid.alpha, a)) & np.isfinite(grid.n_stable)]
+        if g.empty:
+            continue
+        a1.plot(g.true_selective_risk, g.n_stable, color=col, marker=mk, markevery=max(1, len(g) // 6),
+                markersize=4, label=f"target risk {a:g}")
+        last = g.iloc[-1]
+        a1.annotate(f"{a:g}", (last.true_selective_risk, last.n_stable), xytext=(3, 0), textcoords="offset points",
+                    fontsize=6.5, color=INK2, va="center")
+        rows += [{"panel": "a", "alpha": a, "true_selective_risk": r.true_selective_risk, "n_needed": r.n_stable}
+                 for r in g.itertuples()]
+    a1.set_yscale("log")
+    a1.set_xlabel("True selective risk of the accepted calls")
+    a1.set_ylabel("Accepted calibration proteins\nneeded (power 0.8)")
+    a1.grid(axis="x")
+    if len(grid):
+        a1.text(0.98, 0.03, f"per-test delta {grid.per_test_delta.iloc[0]:.4f}", transform=a1.transAxes,
+                ha="right", va="bottom", fontsize=6, color=MUTED)
+    a1.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=3, fontsize=6.5)
+    b = bud[(bud.geometry == "centroid") & np.isclose(bud.alpha, 0.2)].set_index("tier").reindex(TIERS)
+    x = np.arange(len(TIERS))
+    need = b.n_needed.to_numpy(float)
+    have = b.n_available.to_numpy(float)
+    top = np.nanmax(np.concatenate([need[np.isfinite(need)], have[np.isfinite(have)], [10.0]])) * 4
+    shown = np.where(np.isfinite(need), need, top)
+    for xi, n_, h_ in zip(x, shown, have):
+        a2.plot([xi, xi], [max(h_, 1), n_], color=AXIS, linewidth=1.0, zorder=1)
+    a2.scatter(x, np.maximum(have, 1), s=26, color="#eb6834", marker="s", zorder=3, edgecolors="white",
+               linewidths=0.6, label="available (calibration split)")
+    fin = np.isfinite(need)
+    a2.scatter(x[fin], shown[fin], s=26, color="#2a78d6", marker="o", zorder=3, edgecolors="white", linewidths=0.6,
+               label="needed (lower bound)")
+    if (~fin).any():  # unbounded: an open arrow at the top, never a dot that reads as a finite value
+        a2.scatter(x[~fin], shown[~fin], s=34, facecolors="none", edgecolors="#2a78d6", marker="^", zorder=3,
+                   linewidths=1.0, label="no certifiable operating point")
+    for xi, n_, yrs in zip(x, need, b.years_of_accrual_for_deficit):
+        txt = "not certifiable" if not np.isfinite(n_) else (f"~{yrs:.0f} y" if np.isfinite(yrs) and yrs >= 1 else "")
+        if txt:
+            a2.annotate(txt, (xi, n_ if np.isfinite(n_) else top), xytext=(0, 5), textcoords="offset points",
+                        ha="center", fontsize=6, color=INK2)
+    a2.set_yscale("log")
+    a2.set_xticks(x, [TIER_LABEL[t] for t in TIERS], fontsize=6.5)
+    a2.set_ylabel("Calibration proteins\n(target risk 0.2)")
+    a2.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=1, fontsize=6.5)
+    rows += [{"panel": "b", "tier": t, "n_needed": n_, "n_available": h_, "years": y_}
+             for t, n_, h_, y_ in zip(TIERS, need, have, b.years_of_accrual_for_deficit)]
+    name = "fig9_certification_budget" if tag == "E6" else "figS3_certification_budget_pilot"
+    save(fig, name, pd.DataFrame(rows))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--backbone", default="split100")
@@ -297,6 +409,8 @@ def main():
     fig_ablation(args.backbone)
     fig_nise(args.backbone)
     fig_reliability()
+    fig_ecbench_rescoring()
+    fig_cert_budget()
     print(f"CX08 DONE -> {config.CX_FIGS}")
 
 

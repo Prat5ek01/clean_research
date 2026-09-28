@@ -9,7 +9,12 @@ Per-EC biology from current Swiss-Prot Pfam annotations of the same training acc
                 a clan counts as its own clan); nise_like = >=2 groups each covering >=20% of the
                 Pfam-annotated members.
 E3b (--write-nise-fasta, cx_03_embed.py --sets nise_members, then --subgroups): are those
-subgroups separate clusters in CLEAN space, i.e. is the single EC centroid between them?"""
+subgroups separate clusters in CLEAN space, i.e. is the single EC centroid between them?
+
+Added 2026-09-28: mean_margin = mean(d_other - d_own) is not independent of rms_radius (a larger spread raises
+d_own and so lowers the margin mechanically). The two components are therefore tested separately:
+mean_d_own (distance of members to their own leave-one-out centroid: "dispersed") and mean_d_other (distance to
+the nearest other, non-co-annotated centroid: "crowded")."""
 import argparse
 import json
 import time
@@ -50,6 +55,8 @@ def loo_geometry(idx, chunk=20000):
     co = coannotated(idx)
     mis = np.zeros(len(idx.E), dtype=bool)
     margin = np.full(len(idx.E), np.nan)
+    own = np.full(len(idx.E), np.nan)
+    oth = np.full(len(idx.E), np.nan)
     for s in range(0, len(idx.E), chunk):
         X = idx.E[s:s + chunk]
         ri = idx.row_ec[s:s + chunk]
@@ -67,14 +74,20 @@ def loo_geometry(idx, chunk=20000):
         ok = nn > 1
         mis[s:s + chunk] = ok & (d_other < d_own)
         margin[s:s + chunk] = np.where(ok, d_other - d_own, np.nan)
+        own[s:s + chunk] = np.where(ok, d_own, np.nan)
+        oth[s:s + chunk] = np.where(ok & np.isfinite(d_other), d_other, np.nan)
     rate = np.bincount(idx.row_ec, weights=mis, minlength=len(idx.ecs)) / idx.sizes
-    mean_margin = np.array([np.nanmean(margin[a:a + n]) if n > 1 else np.nan
-                            for a, n in zip(idx.starts, idx.sizes)])
+
+    def block_mean(v):
+        return np.array([np.nanmean(v[a:a + n]) if n > 1 and np.isfinite(v[a:a + n]).any() else np.nan
+                         for a, n in zip(idx.starts, idx.sizes)])
+
+    mean_margin, mean_own, mean_oth = block_mean(margin), block_mean(own), block_mean(oth)
     rms = np.sqrt(np.bincount(idx.row_ec, weights=((idx.E - idx.centroids[idx.row_ec]) ** 2).sum(1),
                               minlength=len(idx.ecs)) / idx.sizes)
     rate[idx.sizes < 2] = np.nan
     rms[idx.sizes < 2] = np.nan
-    return rate, mean_margin, rms
+    return rate, mean_margin, rms, mean_own, mean_oth
 
 
 def clan_groups(accs, pf, clan_of):
@@ -168,7 +181,7 @@ def main():
             raise SystemExit(f"{p} missing: run  cx.bat cx_02_build_temporal.py --with-pfam")
 
     idx = TrainIndex(args.backbone)
-    rate, margin, rms = loo_geometry(idx)
+    rate, margin, rms, d_own, d_other = loo_geometry(idx)
     print(f"LOO centroid misassignment (co-annotated ECs masked): {np.nanmean(rate):.3f} mean per EC; "
           f"{time.time() - t0:.0f}s")
 
@@ -192,7 +205,8 @@ def main():
         big = [s for s in sizes if s >= max(2, 0.2 * n_pf)]
         rows.append({"ec": e, "ec_class": e.split(".")[0], "n": int(idx.sizes[j]), "tier": idx.tiers[j],
                      "n_with_pfam": n_pf, "loo_misassign": rate[j], "mean_margin": margin[j],
-                     "rms_radius": rms[j], "n_arch": int(len(ac)),
+                     "rms_radius": rms[j], "mean_d_own": d_own[j], "mean_d_other": d_other[j],
+                     "n_arch": int(len(ac)),
                      "top_arch_share": float(ac.iloc[0] / n_pf) if n_pf else np.nan,
                      "n_clan_groups": len(sizes), "n_big_clan_groups": len(big), "nise_like": len(big) >= 2})
     df = pd.DataFrame(rows)
@@ -208,7 +222,8 @@ def main():
     a, b = sel[sel.nise_like], sel[~sel.nise_like]
     res = {"backbone": args.backbone, "n_EC_analysed": int(len(sel)), "n_nise_like": int(len(a)),
            "share_nise_like": float(len(a) / max(len(sel), 1))}
-    cols = ["loo_misassign", "rms_radius", "mean_margin"] + (["multiproto_silhouette"] if "multiproto_silhouette" in sel else [])
+    cols = ["loo_misassign", "rms_radius", "mean_margin", "mean_d_own", "mean_d_other"] + \
+        (["multiproto_silhouette"] if "multiproto_silhouette" in sel else [])
     for col in cols:
         m = sel[col].notna()
         if m.sum() < 10 or sel.nise_like[m].nunique() < 2:
@@ -228,7 +243,7 @@ def main():
             p[g] = rng.permutation(p[g])
         perms.append(p)
     res["size_stratified_permutation"] = {}
-    for col in ("loo_misassign", "rms_radius", "mean_margin"):
+    for col in ("loo_misassign", "rms_radius", "mean_margin", "mean_d_own", "mean_d_other"):
         y = sel[col].to_numpy()
         ok = ~np.isnan(y)
         obs = y[lab & ok].mean() - y[~lab & ok].mean()
@@ -281,7 +296,9 @@ def main():
             f"by EC class {res['nise_like_by_EC_class']}\n")
     for col, label in (("rms_radius", "within-EC spread (RMS radius)"),
                        ("mean_margin", "margin to nearest other centroid"),
-                       ("loo_misassign", "LOO centroid misassignment")):
+                       ("loo_misassign", "LOO centroid misassignment"),
+                       ("mean_d_own", "distance to own LOO centroid (dispersed)"),
+                       ("mean_d_other", "distance to nearest other centroid (crowded)")):
         s, pm = res.get(col), res["size_stratified_permutation"][col]
         if s:
             text += (f"- {label}, NISE-like vs other: median {fmt(s['median_nise'])} vs {fmt(s['median_other'])}, "

@@ -1,0 +1,23 @@
+# E5_smoke summary (B=200, seed 20260927)
+
+Synthetic EC-Bench-format data: code-path test only, no scientific content.
+
+- synthetic/na EC4 micro_F1: tau-b 0.833 [0.700,0.867], reversed 10, significant 0; Spearman(inflation, ECs/protein) 0.82 (p=0.000108)
+- synthetic/na EC4 macro_union_F1: tau-b 0.750 [0.616,0.817], reversed 15, significant 0; Spearman(inflation, ECs/protein) 0.82 (p=0.000108)
+- synthetic/na EC4 samples_F1: tau-b 0.867 [0.700,0.884], reversed 8, significant 0; Spearman(inflation, ECs/protein) 0.82 (p=0.000108)
+- synthetic/na EC4 invisible share of FPs across methods: median 0.62 (range 0.48-0.76)
+- legacy new392 clean_maxsep: reported F1 0.497 vs micro 0.498; 150/224 FPs invisible (67%)
+- legacy new392 clean_pvalue: reported F1 0.482 vs micro 0.421; 247/398 FPs invisible (62%)
+- legacy new392 split100_centroid: reported F1 0.497 vs micro 0.498; 150/224 FPs invisible (67%)
+- legacy new392 split100_exemplar: reported F1 0.556 vs micro 0.532; 141/255 FPs invisible (55%)
+- legacy new392 split100_kmean3: reported F1 0.523 vs micro 0.524; 139/244 FPs invisible (57%)
+- legacy new392 split100_multiproto: reported F1 0.489 vs micro 0.483; 162/244 FPs invisible (66%)
+- legacy new392 homology_tophit: reported F1 0.501 vs micro 0.505; 155/232 FPs invisible (67%)
+- legacy price149 clean_maxsep: reported F1 0.495 vs micro 0.426; 106/110 FPs invisible (96%)
+- legacy price149 split100_centroid: reported F1 0.495 vs micro 0.426; 106/110 FPs invisible (96%)
+- legacy price149 split100_exemplar: reported F1 0.487 vs micro 0.414; 113/124 FPs invisible (91%)
+- legacy price149 split100_kmean3: reported F1 0.509 vs micro 0.437; 104/109 FPs invisible (95%)
+- legacy price149 split100_multiproto: reported F1 0.489 vs micro 0.420; 107/111 FPs invisible (96%)
+- legacy price149 homology_tophit: reported F1 0.401 vs micro 0.352; 112/120 FPs invisible (93%)
+- benchmark card sp_temporal_cal: 839 proteins, 576 ECs, unseen 30.5% (pure 215, mixed 41; EC numbered above CLEAN's vocabulary 149, existing EC without training member 103); largest EC 1.14.99.56 (3.9%)
+- benchmark card sp_temporal_test: 1260 proteins, 762 ECs, unseen 30.5% (pure 331, mixed 53; EC numbered above CLEAN's vocabulary 209, existing EC without training member 173); largest EC 1.14.99.56 (3.6%)

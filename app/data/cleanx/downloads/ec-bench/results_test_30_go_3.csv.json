@@ -1,0 +1,10 @@
+{
+  "url": "https://raw.githubusercontent.com/dsaeedeh/EC-Bench/5e98a2c632c6644f06975229ededbd09f4866809/data/results_test_30_go_3.csv",
+  "downloaded_utc": "2026-09-28T00:18:20",
+  "uniprot_release": null,
+  "uniprot_release_date": null,
+  "bytes": 78495,
+  "commit": "5e98a2c632c6644f06975229ededbd09f4866809",
+  "sha256": "2cf5964a9b678d29d17ffb533494daeec5c495bf650de2c53743ce809ee8d72a",
+  "licence": "MIT"
+}

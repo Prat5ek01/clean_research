@@ -86,13 +86,23 @@ def evaluate(truth, preds, ids, depth=4):
 
 
 def bootstrap(truth, preds_by_method, ids, depth=4, B=2000, seed=0,
-              keys=("micro_F1", "macro_union_F1", "macro_true_F1", "weighted_F1", "samples_F1")):
+              keys=("micro_F1", "macro_union_F1", "macro_true_F1", "weighted_F1", "samples_F1"), clusters=None):
     """Paired nonparametric bootstrap over proteins (same resamples for every method).
+
+    clusters: optional id -> cluster label. Clusters are resampled with replacement and every protein takes its
+    cluster's multiplicity (cluster bootstrap for correlated proteins, e.g. sharing an EC). With every protein
+    in its own cluster, in id order, the resamples are identical to the protein bootstrap.
 
     Returns {method: {key: (B,) array}}."""
     rng = np.random.default_rng(seed)
     N = len(ids)
-    W = rng.multinomial(N, np.full(N, 1.0 / N), size=B).astype(float)
+    if clusters is None:
+        W = rng.multinomial(N, np.full(N, 1.0 / N), size=B).astype(float)
+    else:
+        labs = list(dict.fromkeys(clusters[i] for i in ids))
+        pos = {c: k for k, c in enumerate(labs)}
+        Wc = rng.multinomial(len(labs), np.full(len(labs), 1.0 / len(labs)), size=B).astype(float)
+        W = Wc[:, [pos[clusters[i]] for i in ids]]
     out = {}
     for m, preds in preds_by_method.items():
         T, P = _sets(truth, preds, ids, depth)
@@ -120,10 +130,44 @@ def ci(x, level=0.95):
 
 
 def paired_delta(bs, m_new, m_ref, key):
+    """(bootstrap mean of the difference, 95% percentile CI, two-sided bootstrap p). Report the observed
+    full-sample difference (observed_delta) as the effect; for macro-averaged keys the bootstrap mean is biased
+    because resampling changes which classes are present."""
     d = bs[m_new][key] - bs[m_ref][key]
     lo, hi = ci(d)
     p = 2 * min(np.mean(d <= 0), np.mean(d >= 0))
     return float(d.mean()), lo, hi, float(min(p, 1.0))
+
+
+def observed_delta(truth, preds_new, preds_ref, ids, key, depth=4):
+    """Full-sample point estimate of metric(new) - metric(ref) on the same ids."""
+    return float(evaluate(truth, preds_new, ids, depth)[key] - evaluate(truth, preds_ref, ids, depth)[key])
+
+
+def holm(pvals):
+    """Holm step-down adjusted p-values (family-wise error control), in input order."""
+    p = np.asarray(pvals, float)
+    m = len(p)
+    if m == 0:
+        return p
+    o = np.argsort(p, kind="stable")
+    adj = np.minimum(1.0, np.maximum.accumulate((m - np.arange(m)) * p[o]))
+    out = np.empty(m)
+    out[o] = adj
+    return out
+
+
+def bh(pvals):
+    """Benjamini-Hochberg adjusted p-values (false-discovery-rate control), in input order."""
+    p = np.asarray(pvals, float)
+    m = len(p)
+    if m == 0:
+        return p
+    o = np.argsort(p, kind="stable")
+    adj = np.minimum.accumulate((p[o] * m / np.arange(1, m + 1))[::-1])[::-1]
+    out = np.empty(m)
+    out[o] = np.minimum(adj, 1.0)
+    return out
 
 
 def group_ids(ids, groups):

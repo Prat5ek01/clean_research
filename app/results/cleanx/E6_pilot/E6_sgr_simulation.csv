@@ -1,0 +1,4 @@
+tier,alpha,n_budget,coverage,risk,target_power,sgr_rate_at_budget,sgr_rate_at_2x_budget
+common,0.1,3050,0.1,0.041666666666666664,0.8,0.425,0.9225
+common,0.2,630,0.1,0.041666666666666664,0.8,0.5175,0.975
+common,0.3,200,0.7,0.16447368421052633,0.8,0.625,0.9675

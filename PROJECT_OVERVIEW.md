@@ -1,5 +1,9 @@
 # CLEAN Project — Deep-Dive Overview
 
+> **Status (2026-09-28):** this overview predates the `cleanx` audit layer (`app/cleanx/`, `app/cx_*.py`).
+> For the current research plan, results and pre-registrations see [`PUBLICATION_PLAN.md`](PUBLICATION_PLAN.md);
+> for the commands, see [`app/cleanx/RUNBOOK.md`](app/cleanx/RUNBOOK.md).
+
 > This is a companion document to the upstream [`README.md`](README.md). The upstream file is the
 > original project's install/usage guide. This file explains **what the project actually does**,
 > **how the pieces fit together**, **what has been added on top of the vanilla codebase in this
