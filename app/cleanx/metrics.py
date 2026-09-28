@@ -112,7 +112,8 @@ def bootstrap(truth, preds_by_method, ids, depth=4, B=2000, seed=0,
         ti = np.array([len(t & p) for t, p in zip(T, P)], float)
         np_ = np.array([len(p) for p in P], float)
         nt = np.array([len(t) for t in T], float)
-        samples_f1 = (W @ _div(2 * ti, np_ + nt)) / N
+        # weighted mean over the resample: the weights sum to N for the protein bootstrap but not for clusters
+        samples_f1 = (W @ _div(2 * ti, np_ + nt)) / W.sum(1)
         res = {}
         for key in keys:
             scheme, metric = key.rsplit("_", 1)

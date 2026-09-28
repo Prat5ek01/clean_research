@@ -51,3 +51,12 @@ def test_observed_delta_is_the_point_difference():
     d = observed_delta(truth, pa, pb, ids, "macro_union_F1")
     ref = evaluate(truth, pa, ids)["macro_union_F1"] - evaluate(truth, pb, ids)["macro_union_F1"]
     assert abs(d - ref) < 1e-15
+
+
+def test_cluster_bootstrap_samples_f1_is_a_weighted_mean():
+    # perfect predictions: per-protein F1 is 1 for every protein, so every resample must give exactly 1, whatever
+    # the cluster sizes (the resample weights sum to N only for the protein bootstrap)
+    truth, _, _, ids = _toy(n=30, seed=5)
+    clusters = {i: ("big" if k < 20 else f"s{k}") for k, i in enumerate(ids)}
+    bs = bootstrap(truth, {"m": truth}, ids, B=200, seed=2, keys=("samples_F1",), clusters=clusters)
+    assert np.allclose(bs["m"]["samples_F1"], 1.0), bs["m"]["samples_F1"][:5]

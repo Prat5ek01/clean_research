@@ -1,0 +1,67 @@
+{
+  "blast_version": "blastp: 2.12.0+",
+  "created_utc": "2026-09-28T06:21:38Z",
+  "parameters": {
+    "outfmt": "6 qseqid sseqid pident length qlen slen bitscore evalue nident",
+    "evalue": 10.0,
+    "max_target_seqs": 500,
+    "kept_per_query": "10 best by bit score + maximum-identity hit",
+    "scoring": "blastp defaults (BLOSUM62, gap open 11, extend 1, comp. stats 2)",
+    "makeblastdb": "-dbtype prot (no -parse_seqids, so subject ids stay verbatim)"
+  },
+  "database": {
+    "name": "split100",
+    "n": 227362,
+    "digest": "247a69f95d8ca29f03c4240e75811757ae831a9e350a0699980b7772e7d9c5b2"
+  },
+  "sets": {
+    "new392": {
+      "n": 392,
+      "digest": "c59d0f78c8a2be1b0a7d1831e37e5447888812af19afa7bf516539d640042250",
+      "file": "new392.tsv.gz",
+      "file_sha256": "0420879f2a3722f22ef7613ae9692b925b6cad1984fe0e510cb9be3907b3c905",
+      "n_with_hits": 392,
+      "rows_kept": 3868
+    },
+    "price149": {
+      "n": 149,
+      "digest": "c557b1b5b5408b4da3dce4e57e74e33418fcc016e0b04e9e10a00d53a8474407",
+      "file": "price149.tsv.gz",
+      "file_sha256": "59ebd47fa8522fad7b58e571b35ef8c83aba6b887f42abf1bce169d72cd3d8e8",
+      "n_with_hits": 149,
+      "rows_kept": 1469
+    },
+    "sp_temporal_cal": {
+      "n": 839,
+      "digest": "258476d8b53b9267500aaa279f24ba6566ceb45fe889e4549dbe7f3b2a6aef29",
+      "file": "sp_temporal_cal.tsv.gz",
+      "file_sha256": "2be2ce47681a4a678fe4fb9aedc58b4bfab9890efd2a6f28f648daabe5d6aa04",
+      "n_with_hits": 835,
+      "rows_kept": 8240
+    },
+    "sp_temporal_test": {
+      "n": 1260,
+      "digest": "59843ab67130112f591aa676e4a66d7da01df5b5a75e4c34b9fa92e5da7e1e4c",
+      "file": "sp_temporal_test.tsv.gz",
+      "file_sha256": "5fd2f27ab4e6e817b87d964c33ae00d9333bcfa98ac0425e5e12fb407aa01a91",
+      "n_with_hits": 1259,
+      "rows_kept": 12380
+    }
+  },
+  "commands": {
+    "new392": "blastp -query data/cleanx/cache/blastdb/q_new392.fasta -db data/cleanx/cache/blastdb/split100 -outfmt 6 qseqid sseqid pident length qlen slen bitscore evalue nident -evalue 10.0 -max_target_seqs 500 -num_threads 4 -out data/cleanx/cache/blastdb/q_new392.tsv",
+    "price149": "blastp -query data/cleanx/cache/blastdb/q_price149.fasta -db data/cleanx/cache/blastdb/split100 -outfmt 6 qseqid sseqid pident length qlen slen bitscore evalue nident -evalue 10.0 -max_target_seqs 500 -num_threads 4 -out data/cleanx/cache/blastdb/q_price149.tsv",
+    "sp_temporal_cal": "blastp -query data/cleanx/cache/blastdb/q_sp_temporal_cal.fasta -db data/cleanx/cache/blastdb/split100 -outfmt 6 qseqid sseqid pident length qlen slen bitscore evalue nident -evalue 10.0 -max_target_seqs 500 -num_threads 4 -out data/cleanx/cache/blastdb/q_sp_temporal_cal.tsv",
+    "sp_temporal_test": "blastp -query data/cleanx/cache/blastdb/q_sp_temporal_test.fasta -db data/cleanx/cache/blastdb/split100 -outfmt 6 qseqid sseqid pident length qlen slen bitscore evalue nident -evalue 10.0 -max_target_seqs 500 -num_threads 4 -out data/cleanx/cache/blastdb/q_sp_temporal_test.tsv",
+    "pair": "blastp -query data/cleanx/cache/blastdb/q_sp_temporal_test_vs_sp_temporal_cal.fasta -db data/cleanx/cache/blastdb/sp_temporal_cal -outfmt 6 qseqid sseqid pident length qlen slen bitscore evalue nident -evalue 10.0 -max_target_seqs 500 -num_threads 4 -out data/cleanx/cache/blastdb/q_sp_temporal_test_vs_sp_temporal_cal.tsv"
+  },
+  "pair": {
+    "query": "sp_temporal_test",
+    "target": "sp_temporal_cal",
+    "query_digest": "59843ab67130112f591aa676e4a66d7da01df5b5a75e4c34b9fa92e5da7e1e4c",
+    "target_digest": "258476d8b53b9267500aaa279f24ba6566ceb45fe889e4549dbe7f3b2a6aef29",
+    "file": "sp_temporal_test_vs_sp_temporal_cal.tsv.gz",
+    "file_sha256": "f95b1dbe697c2ef3ca6ced0d9ed25b3da1f3e63f9630b850f974e38d6e7a328f",
+    "n_with_hits": 1259
+  }
+}

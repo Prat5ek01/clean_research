@@ -148,10 +148,24 @@ def apply_threshold(score, theta):
     return np.asarray(score, float) >= theta
 
 
+def risk_ci(errors, n, level=0.95):
+    """Two-sided exact (Clopper-Pearson) confidence interval for an error rate of errors/n."""
+    if n == 0:
+        return float("nan"), float("nan")
+    a = (1 - level) / 2
+    lo = 0.0 if errors == 0 else float(beta.ppf(a, errors, n - errors + 1))
+    hi = 1.0 if errors >= n else float(beta.ppf(1 - a, errors + 1, n - errors))
+    return lo, hi
+
+
 def selective_summary(accept, correct):
+    """Coverage and realized selective risk, with the error count and an exact 95% CI (a realized risk above
+    alpha on a handful of accepted proteins is not evidence that the guarantee failed)."""
     accept = np.asarray(accept, bool)
     correct = np.asarray(correct, bool)
     n = len(accept)
     na = int(accept.sum())
+    err = int((~correct[accept]).sum())
+    lo, hi = risk_ci(err, na)
     return {"n": n, "accepted": na, "coverage": na / n if n else float("nan"),
-            "selective_risk": float((~correct[accept]).mean()) if na else float("nan")}
+            "selective_risk": err / na if na else float("nan"), "errors": err, "risk_ci_lo": lo, "risk_ci_hi": hi}

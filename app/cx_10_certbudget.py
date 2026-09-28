@@ -25,6 +25,11 @@ Decision rules. Deficit CI above 0 in the rare tiers: C4 reports "rare-EC calls 
 calibration data that exist; they need N proteins, about Y years of curation, or tier pooling / hierarchical
 abstention". Deficit <= 0: certification is feasible with current data (G-B expected positive).
 
+Reporting changes 2026-09-28, after the confirmatory run (no estimate or decision changes): a bootstrap quantile that
+falls between two non-certifiable (infinite) resamples is reported as inf (numpy's interpolation returned NaN); the
+years of accrual at the deficit's lower 95% bound are added (years_at_deficit_ci_lo), since the point estimate of the
+deficit is unstable when a tier is close to not certifiable.
+
 Modes: default (confirmatory; needs results/cleanx/E4/E4_features_cal_<geometry>.csv from the full run),
 --pilot (New-392 half used as calibration in the E4 smoke run; disclosed pilot; writes E6_pilot),
 --smoke (synthetic features and known-answer checks; writes E6_smoke)."""
@@ -112,7 +117,7 @@ def tier_budgets(f, geom, alphas, delta, B, seed, source):
                 boot.append(C.best_budget(g.score.to_numpy()[idx], g.correct4.to_numpy()[idx], a, delta,
                                           groups=len(TIERS))["n_needed"])
             boot = np.array(boot, float)
-            lo, hi = (np.quantile(boot, 0.025), np.quantile(boot, 0.975)) if B else (np.nan, np.nan)
+            lo, hi = C.percentile_ci(boot)  # non-certifiable resamples count as +inf (pre-registered)
             rows.append({"source": source, "geometry": geom, "tier": t, "alpha": a, "n_available": n_av,
                          "top1_accuracy": float(g.correct4.mean()), **est,
                          "deficit": est["n_needed"] - n_av, "deficit_ci_lo": lo - n_av, "deficit_ci_hi": hi - n_av,
@@ -180,6 +185,9 @@ def main():
     bdf["years_of_accrual_for_deficit"] = [
         (r.deficit / rate.get(f"pred_tier:{r.tier}", np.nan)) if np.isfinite(r.deficit) and r.deficit > 0 else
         (0.0 if np.isfinite(r.deficit) else np.inf) for r in bdf.itertuples()]
+    bdf["years_at_deficit_ci_lo"] = [
+        (r.deficit_ci_lo / rate.get(f"pred_tier:{r.tier}", np.nan)) if np.isfinite(r.deficit_ci_lo) and
+        r.deficit_ci_lo > 0 else (0.0 if np.isfinite(r.deficit_ci_lo) else np.nan) for r in bdf.itertuples()]
     bdf.to_csv(out / "E6_tier_budget.csv", index=False)
 
     sims = []  # secondary (e): how close SGR's own threshold search comes to the oracle-coverage budget
@@ -205,12 +213,16 @@ def main():
             continue
         head = f"- centroid {r.tier} alpha={r.alpha}: available {r.n_available}, top-1 acc {r.top1_accuracy:.2f}; "
         if r.status != "estimated":
-            lines.append(head + f"{r.status.replace('_', ' ')}; bootstrap share of certifiable resamples "
+            what = "not certifiable at any budget" if r.status == "risk_above_alpha" else "not estimable"
+            lines.append(head + f"{r.status.replace('_', ' ')} ({what}); deficit CI [{fmt_n(r.deficit_ci_lo)}, "
+                                f"{fmt_n(r.deficit_ci_hi)}] (>= {r.years_at_deficit_ci_lo:.1f} years of accrual at the "
+                                f"lower bound); bootstrap share of certifiable resamples "
                                 f"{r.share_resamples_certifiable:.2f}")
             continue
         lines.append(head + f"needed {fmt_n(r.n_needed)} (coverage {r.best_coverage}, selective risk "
                             f"{r.risk_at_best:.2f}); deficit {fmt_n(r.deficit)} [CI {fmt_n(r.deficit_ci_lo)}, "
-                            f"{fmt_n(r.deficit_ci_hi)}]; ~{r.years_of_accrual_for_deficit:.1f} years of Swiss-Prot accrual")
+                            f"{fmt_n(r.deficit_ci_hi)}]; ~{r.years_of_accrual_for_deficit:.1f} years of Swiss-Prot accrual "
+                            f"(>= {r.years_at_deficit_ci_lo:.1f} at the lower bound)")
     lines.append(f"- accrual: {rate['all_enzymes']:.0f} new Swiss-Prot enzymes/year pass the benchmark filters")
     for r in sdf.itertuples():
         lines.append(f"- SGR simulation {r.tier} alpha={r.alpha}: certification rate {r.sgr_rate_at_budget:.2f} at the "

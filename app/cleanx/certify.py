@@ -109,6 +109,20 @@ def group_budget(r, coverage, alpha, delta, groups=4, target=0.8, n_max=200000, 
     raise RuntimeError(f"group_budget did not converge (r={r}, c={coverage}, alpha={alpha})")
 
 
+def percentile_ci(x, level=0.95):
+    """Percentile interval of bootstrap budgets that may be +inf (resamples that cannot certify). numpy's linear
+    interpolation between two infinite values returns nan; that quantile is +inf."""
+    x = np.asarray(x, float)
+    if not len(x):
+        return float("nan"), float("nan")
+    a = round((1 - level) / 2, 12)  # exactly 0.025 for 95%: (1 - 0.95) / 2 is 0.025000000000000022 in floating point
+    out = []
+    for q in (a, round(1 - a, 12)):
+        v = float(np.quantile(x, q))
+        out.append(math.inf if math.isnan(v) else v)
+    return out[0], out[1]
+
+
 def accepted_counts(score, correct, coverages):
     """(k, errors) among the top ceil(c * n) proteins by score (larger = more confident), per coverage c."""
     s = np.asarray(score, float)

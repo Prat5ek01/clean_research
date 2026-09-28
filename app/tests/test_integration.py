@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 from pathlib import Path
 
@@ -38,6 +39,94 @@ def _run(tmp, script, *args, timeout=900):
     return r.stdout
 
 
+def _run_fail(tmp, script, *args, timeout=900):
+    env = dict(os.environ)
+    env["CLEANX_APP_DIR"] = str(tmp)
+    env["PYTHONPATH"] = os.pathsep.join([str(APP / "src"), str(APP), env.get("PYTHONPATH", "")])
+    r = subprocess.run([sys.executable, str(APP / script), *args], cwd=str(tmp), env=env, capture_output=True,
+                       text=True, timeout=timeout)
+    assert r.returncode != 0, f"{script} {' '.join(args)} should have failed:\n{r.stdout[-1500:]}"
+    print(f"    ran {script} {' '.join(args)} (failed as expected)", flush=True)
+    return r.stdout + r.stderr
+
+
+def _blast_path(tmp):
+    """cx_11 --verify and cx_04 --tool blast on BLAST-format tables with known hits, then a tamper check."""
+    import hashlib
+    from cleanx import blast as BL
+    from cleanx import labels as L
+    cx = tmp / "data" / "cleanx"
+    tr = pd.read_csv(tmp / "data" / "split100.csv", sep="\t", dtype=str, keep_default_na=False)
+    t_ids, t_seq = list(tr.Entry), dict(zip(tr.Entry, tr.Sequence))
+    t_ec = dict(zip(tr.Entry, tr["EC number"]))
+    paths = {"new392": tmp / "data" / "new.csv", "price149": tmp / "data" / "datasets" / "price.csv",
+             "sp_temporal_cal": cx / "sets" / "sp_temporal_cal.csv",
+             "sp_temporal_test": cx / "sets" / "sp_temporal_test.csv"}
+    sets = {n: pd.read_csv(p, sep="\t", dtype=str, keep_default_na=False) for n, p in paths.items()}
+    bdir = cx / "identity" / "blast"
+    man = {"blast_version": "synthetic", "created_utc": "test", "sets": {},
+           "database": {"name": "split100", "digest": BL.seq_digest(t_ids, t_seq)}}
+
+    def hsp(q, qs, h, hs, pid, bits):
+        n = min(len(qs), len(hs))
+        nid = max(1, int(round(pid * n)))
+        return "\t".join([q, h, f"{100 * nid / n:.3f}", str(n), str(len(qs)), str(len(hs)), f"{bits:.1f}",
+                          "1e-30", str(nid)])
+
+    def store(lines, fname):
+        BL.write_hits(BL.reduce_hits(BL.parse_lines(lines)), bdir / fname)
+        return hashlib.sha256((bdir / fname).read_bytes()).hexdigest()
+
+    expect, pid_exp = {}, {}
+    for k, (name, d) in enumerate(sets.items()):
+        qs = dict(zip(d.Entry, d.Sequence))
+        lines = []
+        for j, q in enumerate(d.Entry):
+            hits = [t_ids[(7 * j + 3 * k + r) % len(t_ids)] for r in range(3)]
+            top = 0.25 + 0.7 * ((37 * j + k) % 100) / 100  # spread over all identity bins
+            lines += [hsp(q, qs[q], h, t_seq[h], top - 0.1 * r, 300.0 - 50 * r) for r, h in enumerate(hits)]
+            expect[(name, q)] = hits[0]
+            n = min(len(qs[q]), len(t_seq[hits[0]]))
+            pid_exp[(name, q)] = max(1, int(round(top * n))) / n
+        man["sets"][name] = {"digest": BL.seq_digest(list(d.Entry), qs), "file": f"{name}.tsv.gz",
+                             "file_sha256": store(lines, f"{name}.tsv.gz")}
+    te, ca = sets["sp_temporal_test"], sets["sp_temporal_cal"]
+    tq, cq = dict(zip(te.Entry, te.Sequence)), dict(zip(ca.Entry, ca.Sequence))
+    c_ids = list(ca.Entry)
+    lines = [hsp(q, tq[q], c_ids[j % len(c_ids)], cq[c_ids[j % len(c_ids)]], 0.85 if j < 12 else 0.3, 200.0)
+             for j, q in enumerate(te.Entry)]
+    man["pair"] = {"query": "sp_temporal_test", "target": "sp_temporal_cal", "file": "pair.tsv.gz",
+                   "query_digest": BL.seq_digest(list(te.Entry), tq), "target_digest": BL.seq_digest(c_ids, cq),
+                   "file_sha256": store(lines, "pair.tsv.gz")}
+    (bdir / "manifest.json").write_text(json.dumps(man), encoding="utf-8")
+
+    out = _run(tmp, "cx_11_blast.py", "--verify")
+    assert "FAIL" not in out and "CX11 VERIFY DONE" in out, out[-800:]
+    _run(tmp, "cx_04_identity.py", "--tool", "blast", "--sets", *paths)
+    for name in paths:
+        idt = pd.read_csv(cx / "identity" / f"{name}.csv", dtype={"Entry": str, "top_hit": str})
+        assert (idt.tool == "blast").all()
+        assert all(expect[(name, q)] == h for q, h in zip(idt.Entry, idt.top_hit)), name
+        assert all(abs(pid_exp[(name, q)] - v) < 1e-9 for q, v in zip(idt.Entry, idt.max_pid_short)), name
+        assert idt.identity_bin.nunique() >= 4, name
+    hp = L.read_pred_csv(tmp / "results" / "cleanx" / "preds" / "new392_homology_tophit.csv")
+    for q, items in hp.items():
+        assert [e for e, _ in items] == L.split_ecs(t_ec[expect[("new392", q)]]), q
+    _run(tmp, "cx_04_identity.py", "--tool", "blast", "--pair", "sp_temporal_test:sp_temporal_cal")
+    pr = pd.read_csv(cx / "identity" / "sp_temporal_test_vs_sp_temporal_cal.csv", dtype={"Entry": str})
+    assert (pr.tool == "blast").all() and int((pr.max_pid_short >= 0.5).sum()) == 12
+
+    # a changed sequence must be refused by both the verifier and the parser
+    p = paths["sp_temporal_test"]
+    orig = p.read_bytes()
+    d = te.copy()
+    d.loc[0, "Sequence"] = d.loc[0, "Sequence"][:-1] + ("A" if d.loc[0, "Sequence"][-1] != "A" else "C")
+    d.to_csv(p, sep="\t", index=False)
+    assert "FAIL" in _run_fail(tmp, "cx_11_blast.py", "--verify")
+    assert "mismatch" in _run_fail(tmp, "cx_04_identity.py", "--tool", "blast", "--sets", "sp_temporal_test")
+    p.write_bytes(orig)
+
+
 def test_pipeline_end_to_end_on_synthetic_app():
     import synth_app
     before = _snapshot()
@@ -49,6 +138,8 @@ def test_pipeline_end_to_end_on_synthetic_app():
         out = _run(tmp, "cx_04_identity.py", "--pair", "sp_temporal_test:sp_temporal_cal", "--topn", "10")
         ident = pd.read_csv(tmp / "data" / "cleanx" / "identity" / "sp_temporal_test_vs_sp_temporal_cal.csv")
         assert len(ident) == 110 and (ident.max_pid_short >= 0.5).sum() >= 10, out[-500:]
+
+        _blast_path(tmp)
 
         _run(tmp, "cx_05_geometry.py", "--bootstrap", "200")
         d = pd.read_csv(res / "E2_split100" / "E2_deltas.csv")
@@ -96,7 +187,10 @@ def test_pipeline_end_to_end_on_synthetic_app():
 
         _run(tmp, "cx_10_certbudget.py", "--bootstrap", "20")
         b = pd.read_csv(res / "E6" / "E6_tier_budget.csv")
-        assert {"status", "n_needed", "deficit", "years_of_accrual_for_deficit"} <= set(b.columns)
+        assert {"status", "n_needed", "deficit", "years_of_accrual_for_deficit",
+                "years_at_deficit_ci_lo"} <= set(b.columns)
+        lo = b[b.deficit_ci_lo.notna() & (b.deficit_ci_lo > 0) & (b.deficit_ci_lo < float("inf"))]
+        assert (lo.years_at_deficit_ci_lo <= lo.years_of_accrual_for_deficit + 1e-9).all()
         assert set(b.status.dropna()) <= {"estimated", "risk_above_alpha", "too_few_calibration_proteins"}
 
         # a results folder without the needed files (e.g. a partial run) must not block the pilot fallback
@@ -111,9 +205,49 @@ def test_pipeline_end_to_end_on_synthetic_app():
 
         out = _run(tmp, "cx_08_figures.py")
         assert "skip fig8" in out, out[-800:]
+        assert "does not reproduce" not in out and "WARNING" not in out, out[-800:]
         figs = res / "figures"
-        for f in ("fig2_tiers", "fig5_reliability_by_tier", "fig6_risk_coverage", "fig9_certification_budget"):
+        for f in ("fig2_tiers", "fig3_identity", "fig10_primary_endpoint", "fig5_reliability_by_tier",
+                  "fig6_risk_coverage", "fig7_tier_risk_control", "fig9_certification_budget"):
             for ext in ("png", "pdf", "csv"):
                 assert (figs / f"{f}.{ext}").is_file(), f"{f}.{ext}"
+        f2 = pd.read_csv(figs / "fig2_tiers.csv")
+        assert f2.plotted.any() and ((0 <= f2.ci_lo) & (f2.ci_lo <= f2.ci_hi) & (f2.ci_hi <= 1)).all()
+        f10 = pd.read_csv(figs / "fig10_primary_endpoint.csv")
+        prim = f10[(f10.kind == "primary") & (f10.metric == "macro_union_F1")]
+        ref = d[(d.dataset == "sp_temporal_test") & (d.subset == "closed") & (d.metric == "macro_union_F1") &
+                (d.comparison == "balanced3 - centroid")]
+        assert len(prim) == 1 and abs(prim.delta_obs.iloc[0] - ref.delta_obs.iloc[0]) < 1e-12
+        f7 = pd.read_csv(figs / "fig7_tier_risk_control.csv")
+        assert (f7.errors == (f7.selective_risk.fillna(0) * f7.accepted).round()).all()
+
+        # fig7 with accepted proteins (the synthetic CAL split is too small to certify risk 0.2), from a risk-control
+        # table in the format written before error counts were reported: exact Clopper-Pearson intervals expected
+        (tmp / "fig7_check.py").write_text(textwrap.dedent("""
+            import pandas as pd
+            import cx_08_figures as F
+            F.style()
+            rows = []
+            for g in ("centroid", "exemplar"):
+                for rule in ("global", "mondrian"):
+                    for grp, n, acc, err in (("all", 100, 40, 6), ("pred_tier:common", 60, 30, 3),
+                                             ("pred_tier:rare", 40, 10 if rule == "global" else 0,
+                                              4 if rule == "global" else 0)):
+                        rows.append({"geometry": g, "alpha": 0.2, "delta": 0.1, "rule": rule,
+                                     "dataset": "sp_temporal_test", "group": grp, "n": n, "accepted": acc,
+                                     "coverage": acc / n, "selective_risk": err / acc if acc else float("nan"),
+                                     "theta": 0.5})
+            F.fig_tier_risk_control(pd.DataFrame(rows))
+            print("FIG7 CHECK DONE")
+        """), encoding="utf-8")
+        assert "FIG7 CHECK DONE" in _run(tmp, str(tmp / "fig7_check.py"))
+        from scipy.stats import beta
+        f7 = pd.read_csv(figs / "fig7_tier_risk_control.csv")
+        acc = f7[f7.accepted > 0]
+        assert len(acc) == 10 and len(f7) == 12
+        for k, n in ((6, 40), (3, 30), (4, 10)):
+            r = acc[(acc.errors == k) & (acc.accepted == n)]
+            assert len(r) and (abs(r.risk_ci_lo - beta.ppf(0.025, k, n - k + 1)) < 1e-12).all()
+            assert (abs(r.risk_ci_hi - beta.ppf(0.975, k + 1, n - k)) < 1e-12).all()
     after = _snapshot()
     assert after == before, "the integration test modified the real results folder"

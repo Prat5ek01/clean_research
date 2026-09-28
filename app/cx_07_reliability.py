@@ -17,7 +17,9 @@ Changes recorded 2026-09-28, before any SP-temporal result existed:
   'mixed' (at least one true EC is in the vocabulary, so a correct call exists; e.g. proteins annotated with both
   1.14.99.54 and 1.14.99.56); abstention is reported for both, plus accuracy among accepted mixed calls
 - the EC3 fallback threshold is certified on the calibration proteins that the EC4 rule rejects, the population it
-  is applied to (it was certified on all calibration proteins before, which does not cover the rejected subset)"""
+  is applied to (it was certified on all calibration proteins before, which does not cover the rejected subset)
+Reporting added 2026-09-28 after the confirmatory run (no decision changes): every realized selective risk carries its
+error count and an exact 95% Clopper-Pearson interval."""
 import argparse
 import time
 import warnings
@@ -279,7 +281,9 @@ def main():
             s = r[(r.rule == rule) & (r.geometry == geom) & (r.group.str.startswith("pred_tier") | (r.group == "all"))]
             if len(s):
                 lines.append(f"- risk control alpha={a_show} {rule}/{geom}: " + ", ".join(
-                    f"{x.group} risk {x.selective_risk:.3f} cov {x.coverage:.2f}" for x in s.itertuples()))
+                    f"{x.group} risk {x.selective_risk:.3f} cov {x.coverage:.2f}" +
+                    (f" ({x.errors}/{x.accepted}, 95% CI {x.risk_ci_lo:.2f}-{x.risk_ci_hi:.2f})" if x.accepted else "")
+                    for x in s.itertuples()))
     for geom in geoms:
         lines.append(f"- smallest certifiable selective risk (calibration split), {geom}: " + ", ".join(
             f"{x['group']} {x['min_certifiable_risk']} (cal coverage {x['cal_coverage_at_that_risk']:.2f}, n={x['n_cal']})"

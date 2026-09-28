@@ -1,6 +1,7 @@
 # Publication plan: CLEAN audit and extension for *Computational Biology and Chemistry*
 
-> Status: 2026-09-28. Supersedes the 2026-09-27 version (changes in §15) and the direction ranking in
+> Status: 2026-09-28, updated after the confirmatory run of the pre-registration commit c8e42f7 (results in
+> §2b; post-run changes in §7 and §15). Supersedes the 2026-09-27 version and the direction ranking in
 > `RESEARCH_EXTENSIONS.md`. How to run everything: [`app/cleanx/RUNBOOK.md`](app/cleanx/RUNBOOK.md).
 >
 > ✅ = run and verified. ⏳ = code written and tested (unit + synthetic end-to-end), waiting for the full run.
@@ -22,15 +23,22 @@ predictions onto the test label set, and support-weighted or true-label-macro sc
 invariant to predictions of EC numbers absent from the test labels, and that support-weighted recall equals
 micro recall (all distortion is in precision). The same scoring is used in the public code of CLEAN,
 CLEAN-Contact, ProtDETR, EnzymeHunter and the EC-Bench benchmark [code]. It hides 67–96% of CLEAN's false
-positives, is gameable (top-10 predictions give Price-149 a reported F1 of 0.618 vs CLEAN's 0.495), and across
-EC-Bench's 16 published predictors the inflation tracks how many ECs a method predicts (pilot ρ = 0.94).
+positives, is gameable on small benchmarks (top-10 predictions give Price-149 a reported F1 of 0.618 vs CLEAN's
+0.495), and across EC-Bench's 16 published predictors the inflation tracks how many ECs a method predicts
+(confirmatory ρ = 0.75) and reverses one published method comparison (pre-registered, q = 0.026).
 **(C2) A leakage-controlled temporal benchmark** (2,099 Swiss-Prot enzymes created after CLEAN's snapshot +
 2,000 non-enzymes): 30% of new enzymes carry an EC number CLEAN has never seen, and a model's training
 vintage must be matched per model (a 2025 successor's training set already contains half of it).
-**(C3) Inference geometry:** nearest-member retrieval in CLEAN's frozen space helps common and hurts rare
-classes; a class-balanced density correction is tested against a pre-registered endpoint. **(C4) Reliability
-and its price:** CLEAN's released confidence is most overconfident on rare ECs; exact binomial certification
-budgets quantify how many calibration proteins (and years of Swiss-Prot curation) per-tier risk control needs.
+**(C3) Inference geometry and the homology baseline:** on post-2022 enzymes, member-level inference in CLEAN's
+frozen space beats its one-centroid-per-EC rule (pre-registered primary: `balanced3` +0.043 union-macro F1
+[+0.030, +0.060]; exemplar +0.079, descriptive), yet a standard BLASTp top hit against the same training set beats
+every CLEAN-space rule except on remote homologs (seen-EC micro-F1 0.735 vs 0.641 for CLEAN; crossover by identity
+⟦final⟧). **(C4) Reliability
+and its price:** CLEAN's released confidence is most overconfident on rare ECs (expected calibration error 0.32 in
+the very-rare and singleton predicted tiers vs 0.19 in the common tier; tier-conditional isotonic recalibration on
+the calibration split brings all four to 0.05–0.10); exact binomial certification budgets show that per-tier risk
+control at 20% needs at least 550–630 calibration proteins in each rarer tier (lower 95% bounds; 90–122 exist),
+at least 6–10 years of Swiss-Prot curation (pre-registered H6 and G-E met).
 
 C1 and C2 stand whatever C3/C4 show. Every experiment has a pre-registered primary endpoint and a stated
 fallback framing (§4, §7).
@@ -75,12 +83,12 @@ natural fit; a "new architecture beats SOTA" paper would compete with better-res
 | 11 | Label drift (complete ECs) | New-392: 385 unchanged, 3 changed, 2 gained an EC, 1 lost one, 1 no longer an enzyme entry. ENZYME lists 1,314 transferred and 178 deleted ECs | `E1_label_drift.csv` ✅ |
 | 12 | **Temporal benchmark** | 8,920 Swiss-Prot entries created ≥ 2022-03-01 → 2,099 enzymes (839 CAL / 1,260 TEST) + 2,000 non-enzymes; **640 enzymes (30.5%) carry ≥ 1 EC absent from CLEAN's vocabulary** | `sp_temporal_manifest.json` ✅ |
 | 13 | **What "unseen" means** | TEST: 331 pure (no seen EC) + 53 mixed (also a seen EC, e.g. LPMOs annotated 1.14.99.54; 1.14.99.56); 209 carry an EC numbered above anything CLEAN knows in its sub-subclass (likely created after 2022), 173 an existing EC without a training member; largest single EC 1.14.99.56 (3.6% of TEST) | `E5_*/E5_benchmark_card.csv` ✅ |
-| 14 | **CAL–TEST family overlap** | 355/1,260 TEST proteins (28%) ≥ 50% identical to a CAL protein, 59 ≥ 90% | `identity/sp_temporal_test_vs_sp_temporal_cal.csv` ✅ |
+| 14 | **CAL–TEST family overlap** | BLASTp: 345/1,260 TEST proteins (27%) ≥ 50% identical to a CAL protein, 59 ≥ 90% (fallback aligner: 355, 59) | `identity/blast/`, `identity/sp_temporal_test_vs_sp_temporal_cal.csv` ✅ |
 | 15 | **Model vintage matters** | EnzPlacer's released training set contains 631/1,260 TEST (50.1%) and 430/839 CAL accessions, and 316/392 New-392 sequences; newest overlapping entry created 2025-04-09; 363 TEST proteins (261 seen-EC) were created ≥ 2025-06-01 | computed from the EnzPlacer repo ✅ |
-| 16 | Identity profile (fallback aligner) | Temporal test: 36% < 30% identity to training, 7.5% ≥ 90%. Price-149: 38% < 30%. New-392: 28% < 30%, 11% ≥ 90% | `identity/*.csv` ✅ |
+| 16 | Identity profile (BLASTp; identity over the shorter sequence) | TEST: 22.6% < 30% identity to training, 40.9% ≥ 50%, 7.4% ≥ 90% (1 protein without a hit). CAL: 25.4% / 40.9% / 9.1%. Price-149: 17.4% / 32.2% / 1.3%. New-392: 15.1% / 54.8% / 11.0%. The fallback aligner missed hits and put 36–38% of TEST and Price-149 below 30% | `identity/blast/` ✅ |
 | 17 | **Exemplar trade-off** (dev + confirmatory) | Exemplar − centroid micro-F1 (observed): New-392 +0.035 [+0.002, +0.068]; Price-149 −0.013 [−0.048, +0.024]. Price-149 by tier: common +0.062 (raw p 0.016), rare −0.085 (0.034), very rare −0.132 (< 0.001), singleton −0.043 (0.024); **Holm-adjusted: 0.048, 0.048, 0.002, 0.048** (borderline at B = 2000); the very-rare tier is 18 proteins but only 7 ECs | `E2_deltas.csv` ✅ (Holm added 2026-09-28) |
 | 18 | Local-mean (3-NN) inference | Union-macro F1 New-392 **+0.036 observed** (bootstrap mean +0.032) [+0.007, +0.056]; Price-149 +0.006 (ns). K-means sub-prototypes slightly *worse* (negative result) | E2 ✅ |
-| 19 | Homology baseline | Best local-alignment hit: ties CLEAN on New-392 (micro +0.007, ns), worse on low-identity Price-149 (−0.075 observed, p = 0.038; union-macro −0.084 observed, p = 0.001); PLMs beating BLAST at low identity is already reported (§3), so this is confirmatory | E2 ✅ |
+| 19 | **Homology baseline (BLASTp, standard settings)** | EC of the best BLASTp hit against CLEAN's own training set **beats CLEAN** on New-392 (micro-F1 0.584 vs 0.498; CLEAN's own reported metric 0.574 vs 0.497) and on SP-temporal TEST (seen-EC micro-F1 0.735 vs 0.641, above every CLEAN-space rule, best 0.703; all of TEST, reported metric 0.495 vs 0.443); CLEAN wins on Price-149 (micro 0.426 vs 0.375; reported 0.495 vs 0.392). BLASTp on TEST seen-EC by identity: 0.46 (< 30%, n = 166), 0.69 (30–50%), 0.82 (50–70%), 0.87 (70–90%), 0.94 (≥ 90%). The old fallback aligner understated homology (New-392 0.505, TEST 0.600). Consistent with EC-Bench, where blastp (weighted F1 0.502 at EC4) beats its CLEAN retraining (0.251) [code]. Paired CIs and CLEAN per identity bin: ⟦final run⟧ | scratch analysis on the committed tables ✅; E2 ⟦final⟧ |
 | 20 | **NISE-like ECs are dispersed in CLEAN space** | 183 of 2,493 ECs (7.3%) have members in ≥ 2 non-homologous Pfam-clan groups; size-stratified permutation: RMS radius +0.84, p < 10⁻⁴. The margin (−1.00) is *not* independent evidence (it is d_other − d_own); d_own and d_other are now tested separately (⏳ re-run E3) | `E3_stats.json` ✅ |
 | 21 | **Tier-dependent overconfidence** (*pilot*, New-392 halves) | CLEAN GMM confidence by predicted tier: common ECE 0.18 (conf 0.64, acc 0.64); rare 0.36 (0.74 vs 0.48); very rare 0.50 (0.84 vs 0.34); singleton 0.49 (0.85 vs 0.36) | `E4_smoke/` ✅ (pilot) |
 | 22 | **Certification budget** (*pilot*, New-392 half as calibration) | To certify selective risk 0.2 (power 0.8): common tier needs ≥ 630 calibration proteins (106 available; deficit 524 [34, 6,744] ≈ 2 years of Swiss-Prot accrual); rare, very-rare and singleton tiers have no operating point with estimated risk below α even at α = 0.3 (bootstrap resamples certifiable: 0–9% at α = 0.2, 0–29% at α = 0.3). SGR's own search needs ≈ 2× the oracle budget (simulation) | `E6_pilot/` ✅ (pilot) |
@@ -89,6 +97,39 @@ natural fit; a "new architecture beats SOTA" paper would compete with better-res
 **What we could *not* verify and will not claim:** other methods' published numbers re-computed from their own
 releases (only EC-Bench ships per-protein predictions; the EC-Bench models are EC-Bench's retrainings, not the
 original authors' checkpoints); full texts of most 2025–2026 papers (only abstracts/search results and code).
+
+## 2b. Confirmatory results (run of the pre-registration commit c8e42f7 on the analysis PC, 2026-09-28)
+
+Gates passed: smoke 10/10 (CX00 9/9); ESM-1b equivalence max |diff| 1.76e-07, min cosine 1.0000000; EC-Bench
+reproduction gate 32/32 exact; Props. 1–2 / Lemma 3 hold on 82/82 prediction tables. The EC-Bench part of E5,
+re-run in a Linux copy, gives identical numbers (cross-platform reproducibility). Numbers marked ⟦final⟧ are
+re-read from the CSVs of the final run (BLASTp baseline, §7); no pre-registered endpoint depends on them.
+
+| Endpoint (pre-registered) | Rule | Result | Verdict |
+|---|---|---|---|
+| **E2 primary (H3b)** | `balanced3` − `centroid`, union-macro F1 (EC4), SP-temporal TEST seen-EC (n = 876), paired bootstrap B = 2000, two-sided | **+0.043 [+0.030, +0.060]**, p < 0.001 (0.432 → 0.475) | **met** → G-A: C3 is a method contribution |
+| E2 key secondary | micro-F1, same comparison | +0.047 [+0.032, +0.063] (0.641 → 0.689) | met |
+| E2 robustness (split70 backbone) | same | +0.036 [+0.022, +0.052] | consistent |
+| **E5 primary (H5)** | ≥ 1 of 120 EC-Bench pairs (test, 100%, EC4) ranked one way by the reported F1 and significantly the other way by micro-F1 (BH q < 0.05, sign agreement) | **1** significant (6 directional): DeepECtransformer-learnt ranks above PRIAM by the reported F1 (+0.016) but below by micro-F1 (−0.041 [−0.075, −0.006], q = 0.026). Mechanism: DeepECtransformer predicts ≈1.1 ECs/protein and 393 of its 452 FPs (87%) are invisible to the reported metric; PRIAM abstains on 402/468 proteins with micro precision 0.64. Kendall τ_b 0.90 [0.83, 0.93] | **met, by one pair** → G-D: "the blind spot changes a published method comparison"; rankings otherwise largely preserved |
+| E5 key secondary (S4) | ρ(inflation, ECs/protein) > 0, one-sided | ρ = 0.75, p = 0.0004 | met |
+| E5 S6 (complete-EC-only variant) | same count | 1 significant (DeepECtransformer-regular vs PRIAM, q = 0.015) | consistent |
+| **E6 primary (H6)** | α = 0.2: budget > CAL proteins available in the very-rare and singleton predicted tiers | both tiers: estimated selective risk ≥ 0.2 at every usable coverage → not certifiable at any budget (46% and 21% of bootstrap resamples could certify); deficit 95% CI [528, ∞) and [515, ∞) proteins (102 and 90 available), i.e. ≥ 9.3 and ≥ 10.3 years of Swiss-Prot accrual at the lower bound. Rare tier: deficit 49,218 (unstable point estimate), CI [428, ∞), ≥ 6.3 years. Common tier: feasible now (deficit 110, CI [−250, 2,055]) | **met**; **G-E met** (deficit CI above 0 in all three rarer tiers) |
+| H4a | GMM ECE rises common → singleton | 0.19 / 0.22 / 0.32 / 0.32 (confidence − accuracy −0.02 / +0.15 / +0.30 / +0.28) | met |
+| H4b | per-tier (Mondrian) risk ≤ α on TEST; a global threshold not | global thresholds exceed α = 0.2 in the singleton tier: 4/14 = 0.29 [0.08, 0.58], 5/15 = 0.33 [0.12, 0.62], 11/24 = 0.46 [0.26, 0.67] errors (exact 95% CI) for centroid, exemplar, balanced3; only balanced3's CI excludes 0.2. Overall, each global threshold holds (0.12–0.14). Mondrian never exceeds α but accepts nothing in the rare tiers, and nothing at all for centroid at α = 0.2 | validity met, usefulness not → G-B: report the smallest certifiable risk per tier (centroid 0.25 common vs 0.60–0.65 rarer tiers) |
+| H3c / G-C | NISE exemplar gain > other | 0.073 (n = 87) vs 0.062 (n = 787), p = 0.36 | not met → Supplement; NISE ECs are dispersed (d_own AUROC 0.82, p < 10⁻⁴), not crowded (d_other p = 0.36) |
+| S7 | invisible share of CLEAN's FPs on TEST < New-392's 0.67 | 0.74 (616/830) | **not met** (the prediction was wrong: label-set size alone does not set the invisible share) |
+| H1 (second half) | reported precision rises under over-prediction | only on Price-149 (0.52 → 0.64, top-1 → top-10); it falls on New-392 (0.56 → 0.48) and TEST (0.45 → 0.28) while micro precision collapses (→ 0.09, 0.07, 0.07) | partly met; exactly Prop. 4's condition (a small label set) |
+| H3a | exemplar helps common, hurts rare tiers | exemplar − centroid, micro-F1 by true tier on TEST (Holm across 4 tiers): common +0.082 [+0.060, +0.106], p_Holm < 0.005; rare +0.025 [−0.011, +0.063], very rare +0.048 [−0.020, +0.109], singleton −0.020 [−0.068, +0.026] (p_Holm 0.48 each). `balanced3`: common +0.070 [+0.051, +0.089], p_Holm < 0.005; rarer tiers +0.002 / +0.016 / −0.022, ns. Price-149 shows the full pattern (common +0.063, rare −0.083, very rare −0.130, singleton −0.042; p_Holm ≤ 0.048), but that pattern was seen during development (§7.3), so it is not confirmatory | **half met**: helps common; no significant harm in rarer tiers on TEST. The member-level gain comes from common ECs |
+
+**Homology baseline (BLASTp, after the run; §7):** the best BLASTp hit against CLEAN's training set beats CLEAN on
+New-392 and on TEST (seen-EC micro-F1 0.735 vs 0.641; above every CLEAN-space rule), and loses on Price-149 (0.375
+vs 0.426); details in §2 row 19. This does not touch a pre-registered endpoint, but it changes what C3 can claim.
+
+**Descriptive, not pre-registered (reported as such):** on TEST every member-level geometry beats the centroid
+(union-macro: exemplar +0.079, kmean3 +0.063, balanced1 +0.055, balanced3 +0.043; multiproto +0.007, ns), and
+the class-size correction *lowers* union-macro F1 relative to uncorrected kmean3 (0.475 vs 0.494). The gain
+therefore comes from local, member-level inference, not from correcting a class-size bias; C3 is framed that way.
+On Price-149 no geometry differs from the centroid (balanced3 +0.008 [−0.016, +0.027]).
 
 ---
 
@@ -107,7 +148,7 @@ Conclusion per contribution: **no prior report found / partially reported / alre
 | **C4b** per-tier certification budget (exact binomial) and curation-time conversion | Small-sample conformal (SSBC, arXiv:2509.15349) and class-conditional conformal with many classes (arXiv:2306.09335) [search] give general theory; nothing EC-specific found | **no prior report found** for EC prediction; general theory exists |
 | Chemistry-weighted errors (earlier idea) | EC-Bench scores partial/additional ECs with RDKit reaction similarity [search] | **already reported** — dropped |
 | New training losses | EnzPlacer, EnzymeHunter, GloEC | **already reported** — not pursued |
-| PLM > BLAST at low identity | *PLMs outperform BLAST for evolutionarily distant enzymes* (bioRxiv 10.64898/2026.03.31.715487) [search]; CLEAN paper | **already reported** — our homology result is confirmatory |
+| PLM > BLAST at low identity; BLAST strong at high identity | *PLMs outperform BLAST for evolutionarily distant enzymes* (bioRxiv 10.64898/2026.03.31.715487) [search]; EC-Bench (blastp above its CLEAN retraining) [code]; CLEAN's paper reports CLEAN ahead of BLASTp on New-392 (⟦read its BLASTp configuration in the Methods before writing⟧) | **partially reported** — new here: with standard settings BLASTp beats the *released* CLEAN on New-392 and on a temporal hold-out, and the identity-stratified crossover |
 | Non-functional decoys | EnzymARC (bioRxiv 10.64898/2026.08.21.746242): CLEAN > 90% false-positive rate on active-site-disrupted decoys [search] | **already reported** — cite for the open-set motivation |
 
 Re-run before submission (the field moves monthly): `CLEAN enzyme weighted F1 evaluation`,
@@ -119,12 +160,12 @@ Re-run before submission (the field moves monthly): `CLEAN enzyme weighted F1 ev
 
 | RQ | Hypothesis | Endpoint (pre-registered) | Status |
 |---|---|---|---|
-| RQ1 How much of CLEAN's error does the reported metric see, and can it be gamed? | **H1** Support-weighted P/F1 ignore most FPs and rise under over-prediction; micro, union-macro and per-protein F1 do not | Share of FPs outside the test label space; score vs number of ECs predicted (1–10) | ✅ legacy; ⏳ TEST (E1, E5-S7) |
-| RQ2 How does CLEAN generalise past 2022? | **H2** Exact-EC performance falls steeply with rarity tier and identity; a large share of new enzymes carry unseen ECs | Micro/union-macro F1 by depth × tier × identity bin; unseen-EC share | unseen share ✅; ⏳ performance |
-| RQ3 Is one centroid per EC the right way to use CLEAN's embedding? | **H3a** exemplar helps common, hurts rare tiers. **H3b (primary)** `balanced3` beats centroids on union-macro F1. **H3c** NISE-like ECs are more dispersed (✅) and exemplar gains concentrate in them | **Primary:** union-macro F1 (EC4), `balanced3` − `centroid`, SP-temporal TEST, seen-EC proteins, paired bootstrap (B = 2000), two-sided α = 0.05. **Key secondary:** micro-F1. Sensitivity (2026-09-28): EC-cluster bootstrap, ≤ 5 proteins per EC, CAL-disjoint TEST, protein-level evidence | ⏳ |
-| RQ4 Is CLEAN's confidence reliable, and can abstention be certified per tier? | **H4a** GMM ECE rises from common to singleton. **H4b** Mondrian SGR keeps per-tier risk ≤ α on TEST; a global threshold does not. **H4c** smallest certifiable risk differs by tier | ECE by predicted tier; realized selective risk/coverage per tier at α ∈ {0.1, 0.2, 0.3}; min certifiable risk; abstention on pure vs mixed unseen-EC enzymes and non-enzymes | pilot ✅; ⏳ |
-| **RQ5** Does the reported metric change conclusions across methods? (E5) | **H5 (primary)** ≥ 1 of 120 method pairs on EC-Bench's test set (100% regime, EC4) is ordered one way by the reported weighted F1 and *significantly* the other way by micro-F1 | Number of such pairs; paired bootstrap B = 2000, BH q < 0.05, sign agreement. **Key secondary (amended after pilot):** Spearman ρ(inflation, ECs/protein) > 0, one-sided α = 0.05 | pilot ✅; ⏳ confirmatory |
-| **RQ6** How much calibration data would per-tier certification need? (E6) | **H6 (primary)** For α = 0.2 the budget exceeds the CAL proteins available in the very-rare and singleton predicted tiers | Calibration deficit per tier with bootstrap 95% CI (1000 resamples); secondaries: α 0.1/0.3, other geometries, years of accrual, SGR simulation, realized TEST certification | pilot ✅; ⏳ |
+| RQ1 How much of CLEAN's error does the reported metric see, and can it be gamed? | **H1** Support-weighted P/F1 ignore most FPs and rise under over-prediction; micro, union-macro and per-protein F1 do not | Share of FPs outside the test label space; score vs number of ECs predicted (1–10) | first half ✅ everywhere; the rise only on Price-149; S7 not met (§2b) |
+| RQ2 How does CLEAN generalise past 2022? | **H2** Exact-EC performance falls steeply with rarity tier and identity; a large share of new enzymes carry unseen ECs | Micro/union-macro F1 by depth × tier × identity bin; unseen-EC share | unseen share ✅; strata ⟦final run, BLASTp identity⟧ |
+| RQ3 Is one centroid per EC the right way to use CLEAN's embedding? | **H3a** exemplar helps common, hurts rare tiers. **H3b (primary)** `balanced3` beats centroids on union-macro F1. **H3c** NISE-like ECs are more dispersed (✅) and exemplar gains concentrate in them | **Primary:** union-macro F1 (EC4), `balanced3` − `centroid`, SP-temporal TEST, seen-EC proteins, paired bootstrap (B = 2000), two-sided α = 0.05. **Key secondary:** micro-F1. Sensitivity (2026-09-28): EC-cluster bootstrap, ≤ 5 proteins per EC, CAL-disjoint TEST, protein-level evidence | **H3b met** (+0.043 [+0.030, +0.060]); H3a half met (helps common; no significant harm in rarer tiers); H3c not met |
+| RQ4 Is CLEAN's confidence reliable, and can abstention be certified per tier? | **H4a** GMM ECE rises from common to singleton. **H4b** Mondrian SGR keeps per-tier risk ≤ α on TEST; a global threshold does not. **H4c** smallest certifiable risk differs by tier | ECE by predicted tier; realized selective risk/coverage per tier at α ∈ {0.1, 0.2, 0.3}; min certifiable risk; abstention on pure vs mixed unseen-EC enzymes and non-enzymes | H4a met; H4b valid but vacuous in rare tiers; H4c met |
+| **RQ5** Does the reported metric change conclusions across methods? (E5) | **H5 (primary)** ≥ 1 of 120 method pairs on EC-Bench's test set (100% regime, EC4) is ordered one way by the reported weighted F1 and *significantly* the other way by micro-F1 | Number of such pairs; paired bootstrap B = 2000, BH q < 0.05, sign agreement. **Key secondary (amended after pilot):** Spearman ρ(inflation, ECs/protein) > 0, one-sided α = 0.05 | **H5 met (1 pair)**; S4 met (ρ 0.75) |
+| **RQ6** How much calibration data would per-tier certification need? (E6) | **H6 (primary)** For α = 0.2 the budget exceeds the CAL proteins available in the very-rare and singleton predicted tiers | Calibration deficit per tier with bootstrap 95% CI (1000 resamples); secondaries: α 0.1/0.3, other geometries, years of accrual, SGR simulation, realized TEST certification | **H6 met**; G-E met (deficit CI lower bounds 428–528 proteins, ≥ 6.3–10.3 years) |
 
 ### Decision gates
 
@@ -174,27 +215,28 @@ sensitivity analyses. CAL and TEST are a random split of one pool → CAL-disjoi
 
 | ID | Question | Script | Status | Runtime (your PC) | Key outputs |
 |---|---|---|---|---|---|
-| E0 | Exact reproduction | `cx_00_check.py` | ✅ | 15 s | 9/9 PASS |
-| E1 | Evaluation validity (RQ1) | `cx_01_audit.py` | ✅ legacy; ⏳ TEST | 10 s | blind spot, over-prediction, tier×depth, duplicates, drift |
+| E0 | Exact reproduction | `cx_00_check.py` | ✅ (your PC) | 15 s | 9/9 PASS |
+| E1 | Evaluation validity (RQ1) | `cx_01_audit.py` | ✅ legacy + TEST (confirmatory) | 10 s | blind spot, over-prediction, tier×depth, duplicates, drift |
 | D | Temporal benchmark | `cx_02_build_temporal.py --with-pfam` | ✅ | 20 s | sets, FASTA, manifest |
-| B | ESM-1b embeddings | `cx_03_embed.py` | ⏳ **your step** | 2–4 h | `data/esm_data/*.pt` |
-| I | Identity + homology baseline | `cx_04_identity.py` | ✅ (fallback aligner) | 13 min | identity bins, top-hit predictions |
-| I2 | TEST vs CAL identity (new) | `cx_04_identity.py --pair sp_temporal_test:sp_temporal_cal` | ✅ | ~5 min | CAL-disjoint subset |
-| E2 | Inference geometry (RQ3) | `cx_05_geometry.py` (+ `--backbone split70`) | ✅ legacy; ⏳ TEST | ~5 min | metrics, deltas (observed + bootstrap), Holm, sensitivity subsets |
-| E3 | NISE mechanism | `cx_06_ec_biology.py` | ✅ legacy; ⏳ re-run (d_own/d_other) | 1–2 min | stats JSON |
-| E4 | Reliability (RQ4) | `cx_07_reliability.py` | pilot ✅; ⏳ | ~5 min | calibration, risk control, open set (pure/mixed), fallback |
-| **E5** | **Metric validity across methods (RQ5)** | `cx_09_evalcard.py` | pilot ✅; ⏳ confirmatory | 2–3 min | cards, pairs, rank agreement, invariance, benchmark card |
-| **E6** | **Certification budget (RQ6)** | `cx_10_certbudget.py` | pilot ✅; ⏳ | 5–15 min | n* grid, tier budgets, accrual, SGR simulation |
-| F | Figures | `cx_08_figures.py` | partial ✅ | 30 s | PNG + PDF + CSV twins |
-| T | Unit + integration tests | `tests/run_tests.py` | ✅ 22/22 | ~1 min | PASS/FAIL per test |
+| B | ESM-1b embeddings | `cx_03_embed.py` | ✅ (your PC; equivalence PASS, 0 missing) | 1.5 min now | `data/esm_data/*.pt` |
+| BL | BLASTp search | `cx_11_blast.py` | ✅ (Linux copy, BLAST+ 2.12.0) | 21 min | hit tables + SHA-256 manifest |
+| I | Identity + homology baseline | `cx_04_identity.py --tool blast` | ✅ tested; ⏳ final run | seconds | identity bins, top-hit predictions |
+| I2 | TEST vs CAL identity | `cx_04_identity.py --tool blast --pair sp_temporal_test:sp_temporal_cal` | ✅ tested; ⏳ final run | seconds | CAL-disjoint subset |
+| E2 | Inference geometry (RQ3) | `cx_05_geometry.py` (+ `--backbone split70`) | ✅ confirmatory; ⏳ final run (only homology, identity and CAL-disjoint rows change) | ~5 min | metrics, deltas (observed + bootstrap), Holm, sensitivity subsets |
+| E3 | NISE mechanism | `cx_06_ec_biology.py` | ✅ confirmatory | 30 s | stats JSON |
+| E4 | Reliability (RQ4) | `cx_07_reliability.py` | ✅ confirmatory | 50 s | calibration, risk control (with exact CIs), open set (pure/mixed), fallback |
+| **E5** | **Metric validity across methods (RQ5)** | `cx_09_evalcard.py` | ✅ confirmatory (re-run identical in a Linux copy) | 45 s | cards, pairs, rank agreement, invariance, benchmark card |
+| **E6** | **Certification budget (RQ6)** | `cx_10_certbudget.py` | ✅ confirmatory (re-run identical in a Linux copy) | 3 min | n* grid, tier budgets with CIs, accrual, SGR simulation |
+| F | Figures | `cx_08_figures.py` | ✅ revised and rendered on the confirmatory results; ⏳ final run | 30 s | PNG + PDF + CSV twins, CIs |
+| T | Unit + integration tests | `tests/run_tests.py` | ✅ 29/29 | ~1 min | PASS/FAIL per test |
 
-**Verification done on 2026-09-28** (cloud replica with your exact pins: Python 3.10.20, numpy 1.22.3, pandas
-1.4.2, scipy 1.7.3, scikit-learn 1.2.0, torch 1.11.0, fair-esm 2.0.0, biopython 1.83): 22/22 tests (21
-known-answer unit tests + an end-to-end run of cx_04/05/06/07/08/09/10 on a synthetic app in a temp folder);
-smoke steps 3, 4, 8, 9, 10 PASS; the cx_02/cx_04 smoke outputs regenerated byte-identical to your committed
-ones; EC-Bench's numbers reproduced exactly; E5 and E6 pilots re-run byte-identical (E5 under three hash seeds).
-**Not run there:** anything that loads CLEAN's weights (cx_00, E1/E2/
-E3/E4 on real data) — run `.\cx_smoke.bat` on your PC (10 steps).
+**Verification (2026-09-28, Linux replica with your exact pins:** Python 3.10.20, numpy 1.22.3, pandas 1.4.2,
+scipy 1.7.3, scikit-learn 1.2.0, torch 1.11.0, fair-esm 2.0.0, biopython 1.83, matplotlib 3.7.0): 29/29 tests (28
+known-answer unit tests + an end-to-end run of cx_04/05/06/07/08/09/10/11 on a synthetic app in a temp folder);
+`cx_10 --smoke` and `cx_11 --smoke` PASS; the EC-Bench part of E5 and all of E6 re-run from your confirmatory
+features give your numbers exactly (apart from the NaN → ∞ reporting fix in E6); the revised figures were rendered on your confirmatory results (every F1
+reproduces `E2_metrics_long.csv`). **Not run there:** anything that loads CLEAN's weights (cx_00, E1–E4 on real
+data), which stay on your PC (licence).
 
 **Statistics:** paired non-parametric bootstrap over proteins (B = 2,000; seed 20260927); effects reported as the
 **observed** full-sample difference with the 95% percentile CI; two-sided bootstrap p; per-tier tests Holm-
@@ -209,16 +251,17 @@ false positives** (Prop. 1). Every table carries the invisible-FP count (the "EC
 
 ## 7. Pre-registration and anti-leakage protocol
 
-1. **Freeze before the first confirmatory run.** Commit `app/cleanx/`, `app/cx_*.py`, `app/tests/` and this
-   file; write the hash into the Methods ("analysis code frozen at commit ⟦hash⟧"). Confirmatory = anything on
+1. **Freeze before the first confirmatory run.** Done: the Methods say "analysis code frozen at commit c8e42f7
+   (c8e42f704a406104a6fb61868392e73991f25698), 2026-09-28, before the first confirmatory run; its results are
+   commit 49a6747; the changes after that run (§7.7) are in later commits". Confirmatory = anything on
    SP-temporal TEST (E1–E6) and E5 on the EC-Bench test set.
 2. **CAL only for fitting:** λ (E2), every calibrator/threshold (E4) and every selective-risk estimate for the
    budgets (E6) come from SP-temporal CAL. TEST is only scored.
 3. **Disclosure:** New-392 was used for piloting (1-NN vs centroid, dispersion scaling (rejected), BIC
    multi-prototypes (rejected), GMM calibration, E6 pilot). Price-149's per-tier result motivated `balanced*`
    (post hoc on Price-149). EC-Bench's Price-149 predictions were the E5 pilot.
-4. **Leakage controls:** accession + exact-sequence exclusion; identity strata (MMseqs2 confirmation
-   recommended); CAL-disjoint TEST; protein-level-evidence subset; per-EC cap; EC-cluster bootstrap.
+4. **Leakage controls:** accession + exact-sequence exclusion; identity strata (BLASTp); CAL-disjoint TEST;
+   protein-level-evidence subset; per-EC cap; EC-cluster bootstrap.
 5. **No tuning on anything later reported as a test result.**
 6. **Dated record of changes, all before any SP-temporal TEST result existed:**
    - *2026-09-27:* E2 primary metric and λ criterion switched from true-label to union-label macro-F1 after E1
@@ -233,6 +276,27 @@ false positives** (Prop. 1). Every table carries the invisible-FP count (the "EC
      pilot, before confirmatory scoring: S4 promoted to key secondary with a one-sided direction; primary
      unchanged. (e) **E6 pre-registered** (docstring of `cx_10_certbudget.py`) before any CAL feature existed;
      the Jeffreys shrinkage and the ≥ 10-accepted-protein rule were set after the disclosed pilot.
+7. **Changes after the confirmatory run (2026-09-28; no pre-registered endpoint or decision rule changed; both runs
+   are in the repository history):**
+   - *Homology baseline and identity:* BLASTp (BLAST+ 2.12.0, default scoring, E ≤ 10, best hit by bit score)
+     replaces the fallback aligner (3-mer prefilter + Smith–Waterman on 30 candidates), for the baseline, the
+     identity strata and the CAL-disjoint subset. The switch to a standard aligner was planned before the run
+     (RUNBOOK §4 at c8e42f7: "recommended for final paper numbers"); BLASTp rather than MMseqs2 because it is the
+     baseline of CLEAN's paper and of EC-Bench. Hit tables are stored with SHA-256 digests of the sequences searched.
+   - *Bug fix:* the EC-cluster bootstrap divided per-protein F1 by N instead of each resample's total weight;
+     only the `samples_F1` rows of that sensitivity analysis were affected (micro and union-macro F1 are ratios).
+   - *Reporting:* realized selective risks carry error counts and exact 95% CIs (E4); E6 bootstrap bounds between
+     two non-certifiable resamples are +∞ (numpy's interpolation returned NaN), and E6 adds the years of accrual
+     at the deficit's lower bound (`years_at_deficit_ci_lo`), because the point estimate is unstable near the
+     certifiability boundary (rare tier: 49,218 proteins, "727 years", from a risk estimate of 0.18 on 2 errors in 13 accepted proteins).
+   - *Figures (reporting only):* 95% CIs on every F1 and risk; reliability diagrams compare the two confidences
+     on the same CLEAN predictions (before: CLEAN GMM on centroid vs recalibrated exemplar, two changes at once);
+     risk–coverage adds CLEAN with tier-conditional confidence; the per-tier risk figure shows all three
+     geometries; the EC-Bench figure marks the significant reversal; the budget figure shows the deficit CI and
+     the years at its lower bound instead of the unstable point estimate; new forest plot of the primary endpoint.
+   - *Interpretation:* claims that the confirmatory data did not support are withdrawn or narrowed (§2b: S7,
+     over-prediction reward, the class-size mechanism of C3); the descriptive geometry comparisons are labelled as
+     such.
 
 ---
 
@@ -243,12 +307,13 @@ false positives** (Prop. 1). Every table carries the invisible-FP count (the "EC
 | Fig. 1 | Schematic / graphical abstract: frozen CLEAN encoder → geometries → calibration/abstention → budget | draw manually |
 | Fig. 2 | Blind spot: reported vs micro precision; visible vs invisible FPs (+ over-prediction curve) | `fig1_blind_spot` |
 | Fig. 3 | **EC-Bench re-scoring: reported vs micro F1 for 16 methods; inflation vs ECs/protein** | `fig8_ecbench_rescoring` (pilot: `figS2_…_pilot`) |
-| Fig. 4 | Exact-EC F1 by true tier: centroid / exemplar / homology | `fig2_tiers` |
-| Fig. 5 | F1 vs identity bin | `fig3_identity` |
-| Fig. 6 | NISE gain (+ d_own/d_other) | `fig4_nise_gain` |
-| Fig. 7 | Reliability diagrams by predicted tier: CLEAN GMM vs tier-conditional | `fig5_reliability_by_tier` |
-| Fig. 8 | Risk–coverage; realized per-tier risk, global vs per-tier thresholds | `fig6_risk_coverage`, `fig7_tier_risk_control` |
-| Fig. 9 | **Certification budget: n* vs true selective risk; needed vs available per tier (years)** | `fig9_certification_budget` (pilot: `figS3_…_pilot`) |
+| Fig. 4 | **E2 primary endpoint (forest plot):** `balanced3` − centroid with the sensitivity analyses, the descriptive geometries, BLASTp and the other test sets; union-macro and micro F1 with 95% CIs | `fig10_primary_endpoint` |
+| Fig. 5 | Exact-EC micro-F1 by true tier with 95% CIs: centroid / `balanced3` / exemplar / BLASTp top hit; * = Holm-significant pre-registered per-tier test | `fig2_tiers` |
+| Fig. 6 | Micro-F1 vs BLASTp identity bin with 95% CIs (bins with n < 10 marked) | `fig3_identity` |
+| Fig. 7 | Reliability diagrams by predicted tier on the same CLEAN predictions: released GMM confidence vs tier-conditional isotonic (fitted on CAL); exact CIs per bin; ECE | `fig5_reliability_by_tier` |
+| Fig. 8 | (a) Risk–coverage: centroid with GMM vs tier-conditional confidence, exemplar and `balanced3` tier-conditional (separates the calibration and geometry effects); (b) realized per-tier selective risk with exact CIs, global vs per-tier thresholds, all three geometries | `fig6_risk_coverage`, `fig7_tier_risk_control` |
+| Fig. 9 | **Certification budget: n* vs true selective risk; needed (point and 95% CI) vs available per tier, years of accrual at the lower bound** | `fig9_certification_budget` (pilot: `figS3_…_pilot`) |
+| Supplement | NISE gain (G-C not met), with Mann–Whitney p | `fig4_nise_gain` |
 | Table 1 | Datasets (sizes, tiers, identity bins, unseen pure/mixed, EC concentration) | manifest, `E5_benchmark_card.csv` |
 | Table 2 | Code audit: 9 code bases, averaging, label space, blind or not (file:line@commit) | §3 |
 | Table 3 | Main results with CIs (methods × datasets × metric families, evaluation cards) | `E2_bootstrap_ci.csv`, `E5_cards.csv` |
@@ -256,8 +321,13 @@ false positives** (Prop. 1). Every table carries the invisible-FP count (the "EC
 | Supplement | full tables; duplicates; drift; split70; MMseqs2 vs fallback identity; λ curve; depth ablation (`figS1`); E3b; sensitivity subsets; E5 levels 1–3, 30% regime, complete-EC variant; E5/E6 pilots | E-scripts |
 
 Figure style fixed in `cx_08_figures.py`: validated colour-blind-safe palette (re-validated 2026-09-28 with the
-dataviz validator: CVD ΔE 9.2, normal-vision ΔE 27.6; the green needs visible labels, which every figure has),
-fixed method → colour mapping, one y-axis per panel, direct labels, CSV twin per figure.
+dataviz validator: CVD ΔE 9.2, normal-vision ΔE 27.6; the green needs visible labels, which every figure has; the
+violet added for `balanced3` passes the all-pairs check next to blue, orange and green, worst CVD ΔE 9.2),
+fixed method → colour mapping (grey for anything that is not a method), one y-axis per panel, direct labels, CSV
+twin per figure. Every interval is a 95% interval (paired bootstrap B = 2000 as in E2, or exact Clopper–Pearson);
+F1 point estimates are recomputed from `E2_per_query.csv` and a figure is skipped if they differ from
+`E2_metrics_long.csv`. Captions under the plots are wrapped so that every figure is at most 7.5 in wide (double
+column).
 
 ---
 
@@ -286,29 +356,30 @@ fixed method → colour mapping, one y-axis per panel, direct labels, CSV twin p
   vintage-matched audit, balanced training objectives).
 - **Conclusion (~150).**
 
-### 9.3 Abstract draft (fill ⟦ ⟧ after the full run; 237 words by whitespace count with each placeholder as one word, counted by script on 2026-09-28; filled values add about 5 words, still ≤ 250)
-> Contrastive models such as CLEAN assign Enzyme Commission (EC) numbers by comparing a protein's embedding with
-> one centroid per EC class, and are compared using support-weighted precision and F1. We prove that these
-> scores, as computed in the public code of CLEAN, four successor methods and the EC-Bench benchmark, cannot see
-> predictions of EC numbers absent from the test labels, and that support-weighted recall equals micro recall.
-> On standard benchmarks the reported precision misses 67–96% of CLEAN's false positives, and predicting ten ECs
-> per protein raises CLEAN's reported F1 on Price-149 from 0.495 to 0.618. Re-scoring the published predictions
-> of 16 methods in EC-Bench, the inflation of the reported F1 tracks how many ECs a method predicts per protein
-> (Spearman ⟦ρ⟧) ⟦and reverses ⟦n⟧ significant method comparisons⟧. On a leakage-controlled temporal benchmark
-> of 2,099 Swiss-Prot enzymes created after CLEAN's training snapshot and 2,000 non-enzymes, 30% of new enzymes
-> carry an EC number absent from CLEAN's vocabulary. Nearest-member retrieval in CLEAN's frozen embedding space
-> improves common and harms rare EC classes, a class-size bias that a class-balanced density score ⟦corrects /
-> does not correct⟧ (union-macro F1 ⟦…⟧). CLEAN's released confidence is most overconfident on rare EC numbers
-> (expected calibration error ⟦…⟧ vs ⟦…⟧). Exact binomial certification budgets show that accepting rare-EC calls
-> at 20% certified risk would need ⟦N⟧ calibration proteins, about ⟦Y⟧ years of Swiss-Prot curation. We release
-> an EC evaluation card, the benchmark and all analysis code.
+### 9.3 Abstract draft (244 words by whitespace count with the two ⟦ ⟧ as written, counted by script on 2026-09-28; filled from the confirmatory run except the two ⟦ ⟧, which depend on the BLASTp run: read them from `E2_metrics_long.csv` and `fig3_identity.csv`)
+> Contrastive models such as CLEAN assign Enzyme Commission (EC) numbers by the nearest class centroid and are
+> compared by support-weighted precision and F1. We prove that these scores, as computed in the public code of
+> CLEAN, four successors and the EC-Bench benchmark, cannot see predicted EC numbers absent from the test labels,
+> and that support-weighted recall equals micro recall. On standard benchmarks the reported precision misses
+> 67–96% of CLEAN's false positives, and predicting ten ECs per protein raises CLEAN's reported F1 on Price-149
+> from 0.495 to 0.618. Across 16 methods re-scored from EC-Bench's published predictions, the inflation tracks how
+> many ECs a method predicts (Spearman ρ = 0.75) and one published comparison reverses. On a leakage-controlled
+> temporal benchmark of 2,099 Swiss-Prot enzymes created after CLEAN's training snapshot and 2,000 non-enzymes,
+> 30% of new enzymes carry an EC number absent from CLEAN's vocabulary. In CLEAN's frozen embedding space, a
+> class-balanced nearest-member rule raises the pre-registered union-label macro-F1 by 0.043 (95% CI
+> 0.030–0.060), mainly on common ECs, yet a standard BLASTp top hit on the same training set scores higher
+> (micro-F1 ⟦0.735 vs 0.641⟧) ⟦except below 30% identity⟧. CLEAN's released confidence is most overconfident on
+> rare EC numbers (expected calibration error 0.32 vs 0.19). Exact binomial certification budgets show that
+> certifying rare-EC calls at 20% risk needs at least 550–630 calibration proteins per rarity tier (90–122 exist),
+> at least 6–10 years of Swiss-Prot curation. We release an EC evaluation card, the benchmark and all analysis
+> code.
 
 ### 9.4 Highlights (character counts include spaces, counted by script on 2026-09-28; all ≤ 85)
 1. `Five public EC-prediction code bases use scores blind to out-of-label predictions` (81)
 2. `Reported precision hides 67-96% of CLEAN's false positives on standard benchmarks` (81)
 3. `A 2022-2026 Swiss-Prot hold-out: 30% of new enzymes carry ECs CLEAN never saw` (77)
-4. `CLEAN's released confidence is most overconfident on rare EC numbers` (68) — after E4 confirms
-5. `Certifying rare-EC calls needs more calibration data than Swiss-Prot adds yearly` (80) — only if G-E is positive; otherwise `Tier-conditional risk control certifies abstention separately per rarity tier` (77) if G-B is positive
+4. `CLEAN's released confidence is most overconfident on rare EC numbers` (68) — confirmed (H4a)
+5. `Certifying rare-EC calls needs more calibration data than Swiss-Prot adds yearly` (80) — confirmed (H6, G-E)
 
 ### 9.5 Keywords (≤ 6, confirm the limit)
 Enzyme Commission number; enzyme function prediction; evaluation metrics; contrastive learning; calibration;
@@ -322,8 +393,9 @@ selective prediction.
 |---|---|---|
 | 1 ✅ | E0, E1 legacy, benchmark, identity, E2/E3 legacy, pilots | done |
 | 2 ✅ | Literature + code audit; E5 and E6 implemented, pre-registered, piloted; rigor fixes; 22 tests | done (commit pending) |
-| 3 | **You:** review, commit (hash → Methods), `.\cx_smoke.bat` (10/10), re-run E2/E3 legacy (RUNBOOK §3), then `.\cx_full.bat` (2–4 h) | **G-A, G-B, G-C, G-D, G-E** |
-| 4–5 | Freeze numbers; Tables 1–4; Supplement; MMseqs2 identity; optional EnzPlacer vintage-matched audit (§11) | numbers frozen |
+| 3 ✅ | Confirmatory run of c8e42f7 on your PC (smoke 10/10, full pipeline); audit; BLASTp baseline (§7) | **G-A met, G-B → min certifiable risk, G-C → Supplement, G-D met, G-E met** |
+| 4 | **You:** commit the confirmatory results ✅ (49a6747); pull the audit; `.\cx_smoke.bat` (11/11); `.\cx_full.bat` (≈20 min; embeddings skipped); commit the final results | final numbers |
+| 5 | Fill every ⟦final⟧ marker; Tables 1–4; Supplement; optional EnzPlacer vintage-matched audit (§11) | numbers frozen |
 | 6–12 | Write Methods + Results, then Introduction/Discussion, abstract, highlights, graphical abstract | internal read-through |
 | 13–15 | Licence steps (§13), Zenodo archive, final literature re-check, cover letter, submission | submit |
 
@@ -335,7 +407,7 @@ selective prediction.
 |---|---|---|
 | ESM-1b load fails (RAM) or is too slow | medium | close apps; resumable; or a GPU server (embedding is CPU-only in `esm_embed.py`: add a device option first) |
 | E2 primary (H3b) negative | medium | pre-registered fallback (G-A) |
-| E5 primary underpowered (pilot: no significant reversal at n = 149) | medium–high | S4 key secondary (pilot ρ = 0.94); report nulls honestly (G-D) |
+| E5 primary met by a single pair (q = 0.026) | certain | report it as exactly that, with its mechanism (abstaining vs over-predicting method) and the S6 replication; the key secondary (ρ = 0.75) carries the general claim |
 | Rare tiers cannot be certified | high | this *is* E6's result: report the budget (G-E) |
 | Reviewer: "the metric point is trivial" | medium | the proof is short by design; the contribution is prevalence (5 code bases), size (67–96%), gameability, and the evaluation card |
 | EC-Bench models are retrainings, not original checkpoints | certain | state it; the claim is about the metric's response across 16 heterogeneous predictors, validated by exact reproduction |
@@ -344,7 +416,8 @@ selective prediction.
 | CAL–TEST family overlap (28% ≥ 50% identity; LPMO cluster) | real | CAL-disjoint TEST, EC-cluster bootstrap, per-EC cap (pre-registered sensitivity) |
 | E6 budget is an oracle lower bound | certain | stated; makes "needed > available" conservative; SGR simulation reports the gap (~2×) |
 | New overlapping paper appears | medium | re-run §3 searches before submission |
-| Identity via fallback aligner questioned | medium | MMseqs2 re-run (RUNBOOK §4) |
+| **BLASTp beats CLEAN on New-392 and TEST** (reviewer: "why use CLEAN?") | certain | report it prominently as a finding; show the identity-stratified crossover (where CLEAN still helps: low identity, Price-149); document the BLAST configuration exactly (manifest) and contrast it with the BLASTp setup in CLEAN's paper; C3 becomes "how much of the gap member-level inference closes" |
+| Identity/baseline via the fallback aligner | resolved | replaced by BLASTp (§7); the fallback understated homology |
 | **Licence** | real | §13 |
 
 **Optional next extension (design only, pre-register before running): EnzPlacer vintage-matched audit.** Run the
@@ -359,8 +432,8 @@ extraction matches CLEAN's: layer 33, mean over residues 1..L), and score it wit
 
 - **"Isn't Proposition 1 trivial?"** As mathematics, yes, and deliberately stated as such. The contribution is that
   five public code bases (including the benchmark the field uses) report scores it applies to, that the hidden
-  share is 67–96% of false positives, that over-prediction is rewarded (ρ ≈ 0.94 across 16 methods), and a
-  drop-in evaluation card that fixes the reporting.
+  share is 67–96% of false positives, that the inflation tracks over-prediction across 16 methods (ρ = 0.75,
+  confirmatory) and reverses a published comparison, and a drop-in evaluation card that fixes the reporting.
 - **"EC-Bench's models were retrained — are these the real tools?"** The question is how the metric responds across
   heterogeneous predictors; we reproduce EC-Bench's own published numbers exactly before re-scoring.
 - **"Boger et al. already certified CLEAN."** They control a marginal, set-valued hierarchical loss. We show why
@@ -371,8 +444,12 @@ extraction matches CLEAN's: layer 33, mean over residues 1..L), and score it wit
   so we specify a vintage-matched subset (§11).
 - **"Is the certification budget real or an SGR artifact?"** It is an exact binomial lower bound for certifying a
   fixed coverage with a one-sided Clopper–Pearson bound; SGR's own search needs about twice it (simulation).
-- **"Are CAL and TEST independent?"** A random split of one pool: exchangeable, but 28% of TEST has a ≥ 50% identical
-  CAL relative; pre-registered CAL-disjoint and EC-cluster sensitivity analyses.
+- **"Are CAL and TEST independent?"** A random split of one pool: exchangeable, but 27% of TEST has a ≥ 50% identical
+  CAL relative (BLASTp); pre-registered CAL-disjoint and EC-cluster sensitivity analyses.
+- **"Is your BLASTp baseline fair to CLEAN?"** Same training sequences as CLEAN's index, BLAST+ 2.12.0 default scoring,
+  E ≤ 10, best hit by bit score, same label mapping and the same scorer; exact commands and SHA-256 fingerprints are in
+  `data/cleanx/identity/blast/manifest.json`. It is the configuration a user gets by default, and it also beats CLEAN
+  under CLEAN's own reported metric on New-392 (0.574 vs 0.497).
 - **"Weighted F1 is standard."** We don't call it wrong; we show what it cannot see and that it rewards
   over-prediction, and we recommend reporting it alongside micro/union-macro and the invisible-FP count.
 - **"Isn't 1-NN just BLAST?"** Compared directly: ties CLEAN at high identity, loses at low identity.
@@ -464,5 +541,12 @@ commit hash · Zenodo DOI for the add-on, accession lists and result CSVs (UniPr
   confirmatory run must read the bytes the gate and pilot used); `cx_09 --card` writes to `E5_card/`, never the
   confirmatory `E5/` folder; `cx_08` draws a figure from confirmatory results only when their files exist, else
   from the pilot; test suite 22/22.
+- **After the confirmatory run (same day):** results and verdicts recorded (§2b); audit of all analysis code found
+  one bug (EC-cluster bootstrap, per-protein F1 only) and two reporting gaps (realized-risk CIs; infinite E6
+  bounds), all fixed with tests (29/29); the fallback aligner replaced by BLASTp (§7), which revealed that a
+  standard BLASTp top hit beats CLEAN on New-392 and the temporal TEST set; claims narrowed accordingly (S7,
+  over-prediction reward, class-size mechanism, per-tier certification usefulness). Figures revised so that none
+  can mislead (CIs everywhere, like-for-like comparisons, the primary endpoint drawn; §7.7); H3a, H4b and the E6
+  confidence intervals filled in from the confirmatory CSVs (they do not depend on the BLASTp change).
 - **Dropped earlier:** chemistry-weighted evaluation (EC-Bench), training-space misassignment (multi-EC
   artifact), dispersion-scaled centroids and BIC multi-prototypes (failed pilots).

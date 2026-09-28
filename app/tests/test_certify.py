@@ -66,3 +66,23 @@ def test_best_budget_status_and_shrinkage():
 def test_sgr_simulation_extremes():
     assert C.simulate_sgr(400, 0.5, 0.0, 0.2, 0.1, groups=1, reps=60, seed=1) >= 0.95
     assert C.simulate_sgr(400, 0.5, 0.35, 0.2, 0.1, groups=1, reps=60, seed=1) <= 0.1
+
+
+def test_percentile_ci_keeps_infinite_resamples_infinite():
+    x = [1.0, 2.0] + [math.inf] * 98  # 98% of resamples cannot certify: both bounds are infinite
+    assert C.percentile_ci(x) == (math.inf, math.inf)
+    lo, hi = C.percentile_ci(list(range(100)) + [math.inf] * 3)  # a few infinite resamples: finite lower bound
+    assert math.isfinite(lo) and hi == math.inf
+    lo, hi = C.percentile_ci(np.arange(1001.0))
+    assert abs(lo - 25.0) < 1e-9 and abs(hi - 975.0) < 1e-9, (lo, hi)
+
+
+def test_risk_ci_matches_exact_binomial_interval():
+    from scipy.stats import binomtest
+    from cleanx.calibration import risk_ci, selective_summary
+    for k, n in [(4, 14), (0, 10), (10, 10), (11, 24), (1, 1)]:
+        ref = binomtest(k, n).proportion_ci(confidence_level=0.95, method="exact")
+        lo, hi = risk_ci(k, n)
+        assert abs(lo - ref.low) < 1e-9 and abs(hi - ref.high) < 1e-9, (k, n, lo, hi, ref)
+    s = selective_summary([True] * 14 + [False] * 6, [False] * 4 + [True] * 16)
+    assert (s["accepted"], s["errors"], round(s["selective_risk"], 6)) == (14, 4, round(4 / 14, 6))
