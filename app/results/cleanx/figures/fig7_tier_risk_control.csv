@@ -1,0 +1,9 @@
+geometry,alpha,delta,rule,dataset,group,n,accepted,coverage,selective_risk,theta
+exemplar,0.2,0.1,global,sp_temporal_test,pred_tier:common,883,392,0.4439411098527746,0.125,-3.870910523050886
+exemplar,0.2,0.1,global,sp_temporal_test,pred_tier:rare,176,41,0.2329545454545454,0.1463414634146341,-3.870910523050886
+exemplar,0.2,0.1,global,sp_temporal_test,pred_tier:very_rare,92,23,0.25,0.1739130434782608,-3.870910523050886
+exemplar,0.2,0.1,global,sp_temporal_test,pred_tier:singleton,109,15,0.1376146788990825,0.3333333333333333,-3.870910523050886
+exemplar,0.2,0.1,mondrian,sp_temporal_test,pred_tier:common,883,403,0.4563986409966025,0.1290322580645161,-3.915048184268678
+exemplar,0.2,0.1,mondrian,sp_temporal_test,pred_tier:rare,176,0,0.0,,inf
+exemplar,0.2,0.1,mondrian,sp_temporal_test,pred_tier:very_rare,92,0,0.0,,inf
+exemplar,0.2,0.1,mondrian,sp_temporal_test,pred_tier:singleton,109,0,0.0,,inf
