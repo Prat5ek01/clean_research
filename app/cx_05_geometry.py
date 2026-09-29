@@ -12,7 +12,18 @@ metrics that count every false positive are used (E1 shows support-weighted and 
 scores rise when a method over-predicts):
   primary   macro-F1 over the union label space (EC depth 4), balanced3 vs centroid, sp_temporal_test,
             proteins whose ECs are all in CLEAN's vocabulary ('closed'), paired bootstrap, two-sided
-  secondary micro-F1 for the same comparison; per-true-EC-tier micro-F1 differences"""
+  secondary micro-F1 for the same comparison; per-true-EC-tier micro-F1 differences
+
+Reporting and sensitivity analyses added 2026-09-28, before any sp_temporal_test result existed (the primary and
+secondary endpoints above are unchanged):
+  - every delta row also carries delta_obs, the observed full-sample difference (reported as the effect; the
+    bootstrap mean 'delta' is biased for macro-averaged metrics); per-tier rows carry p_holm (Holm across tiers)
+  - closed|cluster_bootstrap_EC: the same comparisons with proteins resampled in clusters of their rarest true
+    EC (proteins sharing an EC share a centroid, so the protein bootstrap is anti-conservative)
+  - closed_capped<k>: at most k proteins per rarest true EC (seeded sample; --cap-per-ec, default 5)
+  - closed_cal_disjoint: TEST proteins below 50% identity to every CAL protein (needs
+    cx_04_identity.py --pair sp_temporal_test:sp_temporal_cal)
+  - closed_PE1: temporal proteins with UniProt evidence at protein level"""
 import argparse
 import time
 import warnings
@@ -28,13 +39,49 @@ import pandas as pd
 
 from cleanx import labels as L
 from cleanx.index import TrainIndex
-from cleanx.metrics import bootstrap, ci, evaluate, group_ids, paired_delta
+from cleanx.metrics import bootstrap, ci, evaluate, group_ids, holm, paired_delta
+from cleanx.nomenclature import forward_counts
 from cleanx.pipeline import EvalSet, fmt, load_fmap, write_rows
 from cleanx.scoring import (balanced_distances, build_multiproto, exemplar_distances, kmean_distances,
                             maxsep_predict, scores_for)
 
 REF = "centroid"
 LAMBDAS = [0.0, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2]
+KEYS = ("micro_F1", "macro_union_F1", "macro_true_F1", "weighted_F1", "samples_F1")
+
+
+def rarest_ec(ev, idx):
+    """id -> the protein's rarest true EC in the training vocabulary (after ENZYME transfers); the cluster unit."""
+    counts = forward_counts(idx.counts, ev.fmap) if ev.fmap else idx.counts
+    return {i: min(ev.truth[i], key=lambda e: (counts.get(e, 0), e)) if ev.truth[i] else "none" for i in ev.ids}
+
+
+def capped(ids, cluster, k, seed):
+    """At most k proteins per cluster, chosen with a fixed seed; order of ids kept."""
+    rng = np.random.default_rng(seed)
+    keep = set()
+    for c, members in group_ids(ids, cluster).items():
+        pick = members if len(members) <= k else list(rng.choice(members, size=k, replace=False))
+        keep.update(pick)
+    return [i for i in ids if i in keep]
+
+
+def delta_rows(truth, methods, sub, name, label, B, seed, clusters=None):
+    """Paired-bootstrap rows (every method vs REF) with the observed difference."""
+    if REF not in methods or len(sub) < 10:
+        return []
+    bs = bootstrap(truth, methods, sub, depth=4, B=B, seed=seed, keys=KEYS, clusters=clusters)
+    pt = {m: evaluate(truth, P, sub, 4) for m, P in methods.items()}
+    rows = []
+    for m in methods:
+        if m == REF:
+            continue
+        for key in KEYS:
+            d, lo, hi, p = paired_delta(bs, m, REF, key)
+            rows.append({"dataset": name, "subset": label, "n": len(sub), "comparison": f"{m} - {REF}",
+                         "metric": key, "delta": d, "delta_obs": pt[m][key] - pt[REF][key],
+                         "ci_lo": lo, "ci_hi": hi, "p_two_sided": p})
+    return rows
 
 
 def tune_lambda(idx, ev, grid):
@@ -69,6 +116,7 @@ def main():
     ap.add_argument("--lambdas", nargs="+", type=float, default=LAMBDAS)
     ap.add_argument("--bootstrap", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=config.SEED)
+    ap.add_argument("--cap-per-ec", type=int, default=5, help="sensitivity: max proteins per rarest true EC")
     ap.add_argument("--smoke", action="store_true",
                     help="code-path test: New-392 only, lambda tuned on New-392 itself, 200 resamples")
     args = ap.parse_args()
@@ -150,27 +198,63 @@ def main():
                                  "subset": sname, **evaluate(ev.truth, P, sub, depth)})
         primary = closed
         bs = bootstrap(ev.truth, methods, primary, depth=4, B=args.bootstrap, seed=args.seed)
+        pt = {m: evaluate(ev.truth, P, primary, 4) for m, P in methods.items()}
         for m in methods:
             for key, arr in bs[m].items():
                 lo, hi = ci(arr)
                 bs_rows.append({"dataset": name, "subset": "closed", "method": m, "metric": key,
-                                "mean": float(arr.mean()), "ci_lo": lo, "ci_hi": hi, "B": args.bootstrap})
+                                "mean": float(arr.mean()), "observed": pt[m][key], "ci_lo": lo, "ci_hi": hi,
+                                "B": args.bootstrap})
             if m != REF and REF in methods:
                 for key in bs[m]:
                     d, lo, hi, p = paired_delta(bs, m, REF, key)
-                    d_rows.append({"dataset": name, "subset": "closed", "comparison": f"{m} - {REF}",
-                                   "metric": key, "delta": d, "ci_lo": lo, "ci_hi": hi, "p_two_sided": p})
+                    d_rows.append({"dataset": name, "subset": "closed", "n": len(primary),
+                                   "comparison": f"{m} - {REF}", "metric": key, "delta": d,
+                                   "delta_obs": pt[m][key] - pt[REF][key], "ci_lo": lo, "ci_hi": hi,
+                                   "p_two_sided": p})
         per_tier = [m for m in ("exemplar", "kmean3", "balanced3") if m in methods]
+        tier_rows = []
         if per_tier and REF in methods:
             for t, sub in group_ids(primary, tiers).items():
                 if len(sub) < 10:
                     continue
                 bt = bootstrap(ev.truth, {k: methods[k] for k in per_tier + [REF]}, sub, depth=4,
                                B=args.bootstrap, seed=args.seed, keys=("micro_F1",))
+                ptt = {k: evaluate(ev.truth, methods[k], sub, 4)["micro_F1"] for k in per_tier + [REF]}
                 for m in per_tier:
                     d, lo, hi, p = paired_delta(bt, m, REF, "micro_F1")
-                    d_rows.append({"dataset": name, "subset": f"tier:{t}", "comparison": f"{m} - {REF}",
-                                   "metric": "micro_F1", "delta": d, "ci_lo": lo, "ci_hi": hi, "p_two_sided": p})
+                    tier_rows.append({"dataset": name, "subset": f"tier:{t}", "n": len(sub),
+                                      "comparison": f"{m} - {REF}", "metric": "micro_F1", "delta": d,
+                                      "delta_obs": ptt[m] - ptt[REF], "ci_lo": lo, "ci_hi": hi, "p_two_sided": p})
+        for comp in sorted({r["comparison"] for r in tier_rows}):
+            grp = [r for r in tier_rows if r["comparison"] == comp]
+            for r, ph in zip(grp, holm([r["p_two_sided"] for r in grp])):
+                r["p_holm"] = float(ph)
+        d_rows += tier_rows
+
+        # sensitivity analyses (pre-registered 2026-09-28; see module docstring)
+        cl = rarest_ec(ev, idx)
+        sens = {"closed|cluster_bootstrap_EC": (primary, cl)}
+        cap_ids = capped(primary, cl, args.cap_per_ec, args.seed)
+        if len(cap_ids) < len(primary):
+            sens[f"closed_capped{args.cap_per_ec}"] = (cap_ids, None)
+        if ev.temporal and name != "sp_temporal_cal":
+            idf = config.CX_IDENTITY / f"{name}_vs_sp_temporal_cal.csv"
+            if idf.is_file():
+                ident = pd.read_csv(idf, dtype={"Entry": str})
+                pid = dict(zip(ident.Entry, ident.max_pid_short))
+                sens["closed_cal_disjoint"] = ([i for i in primary if pid.get(i, 0.0) < 0.5], None)
+            meta = config.CX_SETS / f"{name.split('_')[0]}_temporal_meta.csv"
+            if meta.is_file():
+                mt = pd.read_csv(meta, dtype=str, keep_default_na=False)
+                pe = dict(zip(mt.accession, mt.protein_existence))
+                sens["closed_PE1"] = ([i for i in primary if pe.get(i, "") == "Evidence at protein level"], None)
+        for label, (sub, clus) in sens.items():
+            d_rows += delta_rows(ev.truth, methods, sub, name, label, args.bootstrap, args.seed, clusters=clus)
+            if clus is None and len(sub) >= 10:
+                for m, P in methods.items():
+                    rows.append({"dataset": name, "backbone": args.backbone, "method": m, "subset_type": "sensitivity",
+                                 "subset": label, **evaluate(ev.truth, P, sub, 4)})
         for k, i in enumerate(ev.ids):
             r = {"dataset": name, "Entry": i, "tier": tiers[i], "identity_bin": idbin[i] if idbin else "",
                  "d_nn": float(dnn[k]) if dnn is not None else np.nan, "true_EC": ";".join(ev.truth[i])}
@@ -184,7 +268,7 @@ def main():
                          for r in prim)
         dl = [d for d in d_rows if d["dataset"] == name and d["subset"] == "closed"
               and d["metric"] in ("micro_F1", "macro_union_F1")]
-        dtxt = "; ".join(f"{d['comparison']} {d['metric']}: {d['delta']:+.3f} [{d['ci_lo']:+.3f},{d['ci_hi']:+.3f}] "
+        dtxt = "; ".join(f"{d['comparison']} {d['metric']}: {d['delta_obs']:+.3f} [{d['ci_lo']:+.3f},{d['ci_hi']:+.3f}] "
                          f"p={d['p_two_sided']:.3g}" for d in dl)
         summary.append(f"- **{name}** (closed n={len(closed)}/{len(ev.ids)}): {line}\n  - paired deltas: {dtxt}")
         print(summary[-1], flush=True)

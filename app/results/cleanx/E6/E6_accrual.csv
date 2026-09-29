@@ -1,0 +1,10 @@
+group,per_year,years_span,basis
+all_enzymes,465.7714155528554,4.506502395619439,benchmark filters
+pred_tier:common,291.4541038918344,4.506502395619439,all enzymes x tier share of calibration predictions
+true_tier:common,234.3280680437424,4.506502395619439,rarest true EC tier
+pred_tier:rare,67.72838223772152,4.506502395619439,all enzymes x tier share of calibration predictions
+true_tier:rare,45.26792223572296,4.506502395619439,rarest true EC tier
+pred_tier:very_rare,56.625368756127834,4.506502395619439,all enzymes x tier share of calibration predictions
+true_tier:very_rare,19.083535844471445,4.506502395619439,rarest true EC tier
+pred_tier:singleton,49.96356066717161,4.506502395619439,all enzymes x tier share of calibration predictions
+true_tier:singleton,25.074878493317133,4.506502395619439,rarest true EC tier

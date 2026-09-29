@@ -10,7 +10,16 @@ with the lambda E2 tuned on the calibration split).
   threshold per predicted-EC tier (delta split by Bonferroni); realized risk/coverage on test
 - open set: share of unseen-EC enzymes and non-enzymes abstained at the certified thresholds;
   AUROC of each score for seen-EC enzymes vs non-enzymes
-- hierarchical fallback: when EC4 abstains, emit the EC3 prefix if its own certified threshold passes"""
+- hierarchical fallback: when EC4 abstains, emit the EC3 prefix if its own certified threshold passes
+
+Changes recorded 2026-09-28, before any SP-temporal result existed:
+- unseen-EC enzymes are split into 'pure' (no true EC in CLEAN's vocabulary: abstaining is the right answer) and
+  'mixed' (at least one true EC is in the vocabulary, so a correct call exists; e.g. proteins annotated with both
+  1.14.99.54 and 1.14.99.56); abstention is reported for both, plus accuracy among accepted mixed calls
+- the EC3 fallback threshold is certified on the calibration proteins that the EC4 rule rejects, the population it
+  is applied to (it was certified on all calibration proteins before, which does not cover the rejected subset)
+Reporting added 2026-09-28 after the confirmatory run (no decision changes): every realized selective risk carries its
+error count and an exact 95% Clopper-Pearson interval."""
 import argparse
 import time
 import warnings
@@ -30,6 +39,7 @@ from cleanx.calibration import (IsoCalibrator, MondrianIso, apply_threshold, bri
                                 gmm_confidence_fast, load_gmms, reliability, risk_coverage,
                                 selective_summary, sgr_threshold)
 from cleanx.index import TrainIndex
+from cleanx.nomenclature import forward_counts
 from cleanx.pipeline import EvalSet, load_fmap, write_rows
 from cleanx.scoring import scores_for
 
@@ -40,6 +50,9 @@ def features(ev, idx, gmms, geoms, lam, ids=None):
     ids = ev.ids if ids is None else ids
     Q = idx.embed(ids)
     true_tier = ev.tiers(idx)
+    counts = forward_counts(idx.counts, ev.fmap) if ev.fmap else idx.counts
+    kind = {i: ("" if true_tier[i] != "unseen" or not ev.truth[i] else
+                ("mixed" if any(counts.get(e, 0) > 0 for e in ev.truth[i]) else "pure")) for i in ids}
     frames = {}
     for geom in geoms:
         S = scores_for(geom, Q, idx, lam=lam.get(geom))
@@ -56,7 +69,7 @@ def features(ev, idx, gmms, geoms, lam, ids=None):
             lab = L.harmonize([ec], truth, ev.fmap)[0] if ev.fmap else ec
             rows.append({"Entry": i, "top1": ec, "top1_scored_as": lab, "d1": d1[k], "gap": d2[k] - d1[k],
                          "pred_tier": idx.tiers[o2[k, 0]], "true_tier": true_tier[i] if truth else "non_enzyme",
-                         "correct4": lab in truth,
+                         "unseen_kind": kind[i], "correct4": lab in truth,
                          "correct3": L.truncate(lab, 3) in {L.truncate(t, 3) for t in truth}})
         f = pd.DataFrame(rows)
         f["score"] = -f.d1
@@ -170,7 +183,9 @@ def main():
             for t in PRED_TIERS:
                 m = (c.pred_tier == t).to_numpy()
                 th["mondrian"][t] = sgr_threshold(c.score[m], c.correct4[m], alpha, args.delta / len(PRED_TIERS))[0]
-            th3 = sgr_threshold(c.score, c.correct3, alpha, args.delta)[0]
+            cal_rej = ~apply_threshold(c.score, c.pred_tier.map(th["mondrian"]).to_numpy())
+            th3 = (sgr_threshold(c.score[cal_rej], c.correct3[cal_rej], alpha, args.delta)[0]
+                   if cal_rej.any() else np.inf)
             for rule, tt in th.items():
                 for name in tests + ([args.nonenzyme] if nonenz is not None else []):
                     f = feats[name][geom]
@@ -195,6 +210,13 @@ def main():
                     if un.any():
                         os_rows.append({**base, "group": "unseen_EC_enzymes", "n": int(un.sum()),
                                         "abstained": float(1 - acc[un].mean())})
+                    for kd in ("pure", "mixed"):
+                        mk = (f.unseen_kind == kd).to_numpy()
+                        if mk.any():
+                            ok = mk & acc
+                            os_rows.append({**base, "group": f"unseen_EC_enzymes_{kd}", "n": int(mk.sum()),
+                                            "abstained": float(1 - acc[mk].mean()),
+                                            "accuracy_if_accepted": float(f.correct4[ok].mean()) if ok.any() else np.nan})
                     if rule == "mondrian":
                         fb = ~acc & apply_threshold(f.score, th3)
                         fb_rows.append({**base, "ec4_accepted": int(acc.sum()), "ec3_fallback_accepted": int(fb.sum()),
@@ -259,7 +281,9 @@ def main():
             s = r[(r.rule == rule) & (r.geometry == geom) & (r.group.str.startswith("pred_tier") | (r.group == "all"))]
             if len(s):
                 lines.append(f"- risk control alpha={a_show} {rule}/{geom}: " + ", ".join(
-                    f"{x.group} risk {x.selective_risk:.3f} cov {x.coverage:.2f}" for x in s.itertuples()))
+                    f"{x.group} risk {x.selective_risk:.3f} cov {x.coverage:.2f}" +
+                    (f" ({x.errors}/{x.accepted}, 95% CI {x.risk_ci_lo:.2f}-{x.risk_ci_hi:.2f})" if x.accepted else "")
+                    for x in s.itertuples()))
     for geom in geoms:
         lines.append(f"- smallest certifiable selective risk (calibration split), {geom}: " + ", ".join(
             f"{x['group']} {x['min_certifiable_risk']} (cal coverage {x['cal_coverage_at_that_risk']:.2f}, n={x['n_cal']})"

@@ -1,0 +1,17 @@
+{
+  "tuning_set": "sp_temporal_cal",
+  "criterion": "macro_union_F1, depth 4, closed subset",
+  "lambda_k1": 0.0,
+  "lambda_k3": 0.01,
+  "grid": [
+    0.0,
+    0.01,
+    0.02,
+    0.03,
+    0.05,
+    0.075,
+    0.1,
+    0.15,
+    0.2
+  ]
+}

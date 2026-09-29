@@ -1,0 +1,88 @@
+geometry,alpha,delta,rule,dataset,group,n,abstained,accuracy_if_accepted,auroc
+centroid,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,1.0,,
+centroid,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,1.0,,
+centroid,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,1.0,,
+centroid,0.1,0.1,global,sp_nonenzyme,non_enzyme,2000,1.0,,
+centroid,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,1.0,,
+centroid,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,1.0,,
+centroid,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,1.0,,
+centroid,0.1,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,1.0,,
+centroid,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.984375,,
+centroid,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9848942598187311,0.0,
+centroid,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.9811320754716981,0.0,
+centroid,0.2,0.1,global,sp_nonenzyme,non_enzyme,2000,1.0,,
+centroid,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,1.0,,
+centroid,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,1.0,,
+centroid,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,1.0,,
+centroid,0.2,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,1.0,,
+centroid,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.8697916666666666,,
+centroid,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.8700906344410876,0.0,
+centroid,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.8679245283018868,0.42857142857142855,
+centroid,0.3,0.1,global,sp_nonenzyme,non_enzyme,2000,0.996,,
+centroid,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,0.8463541666666666,,
+centroid,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,0.8942598187311178,0.0,
+centroid,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.5471698113207547,0.08333333333333333,
+centroid,0.3,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,0.9775,,
+exemplar,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.9661458333333334,,
+exemplar,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9637462235649547,0.0,
+exemplar,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.9811320754716981,1.0,
+exemplar,0.1,0.1,global,sp_nonenzyme,non_enzyme,2000,0.9995,,
+exemplar,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,1.0,,
+exemplar,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,1.0,,
+exemplar,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,1.0,,
+exemplar,0.1,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,1.0,,
+exemplar,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.9140625,,
+exemplar,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9335347432024169,0.0,
+exemplar,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.7924528301886793,0.18181818181818182,
+exemplar,0.2,0.1,global,sp_nonenzyme,non_enzyme,2000,0.9965,,
+exemplar,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,0.9401041666666666,,
+exemplar,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9577039274924471,0.0,
+exemplar,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.8301886792452831,0.1111111111111111,
+exemplar,0.2,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,0.9955,,
+exemplar,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.6875,,
+exemplar,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.743202416918429,0.0,
+exemplar,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.339622641509434,0.14285714285714285,
+exemplar,0.3,0.1,global,sp_nonenzyme,non_enzyme,2000,0.9745,,
+exemplar,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,0.7864583333333334,,
+exemplar,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,0.8489425981873112,0.0,
+exemplar,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.39622641509433965,0.09375,
+exemplar,0.3,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,0.951,,
+balanced3,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.9869791666666666,,
+balanced3,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9909365558912386,0.0,
+balanced3,0.1,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.9622641509433962,0.5,
+balanced3,0.1,0.1,global,sp_nonenzyme,non_enzyme,2000,1.0,,
+balanced3,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,1.0,,
+balanced3,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,1.0,,
+balanced3,0.1,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,1.0,,
+balanced3,0.1,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,1.0,,
+balanced3,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.9270833333333334,,
+balanced3,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9244712990936556,0.0,
+balanced3,0.2,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.9433962264150944,0.3333333333333333,
+balanced3,0.2,0.1,global,sp_nonenzyme,non_enzyme,2000,0.997,,
+balanced3,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,0.953125,,
+balanced3,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,0.9516616314199395,0.0,
+balanced3,0.2,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.9622641509433962,0.5,
+balanced3,0.2,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,0.9965,,
+balanced3,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes,384,0.7057291666666667,,
+balanced3,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_pure,331,0.7522658610271904,0.0,
+balanced3,0.3,0.1,global,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.41509433962264153,0.0967741935483871,
+balanced3,0.3,0.1,global,sp_nonenzyme,non_enzyme,2000,0.9895,,
+balanced3,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes,384,0.7786458333333334,,
+balanced3,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_pure,331,0.8459214501510575,0.0,
+balanced3,0.3,0.1,mondrian,sp_temporal_test,unseen_EC_enzymes_mixed,53,0.3584905660377359,0.08823529411764706,
+balanced3,0.3,0.1,mondrian,sp_nonenzyme,non_enzyme,2000,0.972,,
+centroid,,,,sp_temporal_test,AUROC seen-EC enzymes vs non-enzymes (score),2876,,,0.8964600456621004
+centroid,,,,sp_temporal_test,AUROC seen-EC enzymes vs non-enzymes (clean_gmm),2876,,,0.8964600456621004
+centroid,,,,sp_temporal_test,AUROC seen-EC vs unseen-EC enzymes (score),1260,,,0.7170733447488584
+exemplar,,,,sp_temporal_test,AUROC seen-EC enzymes vs non-enzymes (score),2876,,,0.8895776255707762
+exemplar,,,,sp_temporal_test,AUROC seen-EC vs unseen-EC enzymes (score),1260,,,0.7690110112252664
+balanced3,,,,sp_temporal_test,AUROC seen-EC enzymes vs non-enzymes (score),2876,,,0.905222602739726
+balanced3,,,,sp_temporal_test,AUROC seen-EC vs unseen-EC enzymes (score),1260,,,0.7495332714992391
+centroid,,,,price149,AUROC seen-EC enzymes vs non-enzymes (score),2149,,,0.8791946308724832
+centroid,,,,price149,AUROC seen-EC enzymes vs non-enzymes (clean_gmm),2149,,,0.8791946308724832
+exemplar,,,,price149,AUROC seen-EC enzymes vs non-enzymes (score),2149,,,0.8065268456375838
+balanced3,,,,price149,AUROC seen-EC enzymes vs non-enzymes (score),2149,,,0.8637617449664429
+centroid,,,,new392,AUROC seen-EC enzymes vs non-enzymes (score),2392,,,0.9156109693877552
+centroid,,,,new392,AUROC seen-EC enzymes vs non-enzymes (clean_gmm),2392,,,0.9156109693877552
+exemplar,,,,new392,AUROC seen-EC enzymes vs non-enzymes (score),2392,,,0.8901875000000001
+balanced3,,,,new392,AUROC seen-EC enzymes vs non-enzymes (score),2392,,,0.8970510204081633
