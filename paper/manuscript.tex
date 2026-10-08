@@ -1,0 +1,196 @@
+%%
+%% Copyright 2019-2024 Elsevier Ltd
+%%
+%% This file is part of the 'CAS Bundle'.
+%% --------------------------------------
+%%
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.3c of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.3c or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%%
+%% The list of all files belonging to the 'CAS Bundle' is
+%% given in the file `manifest.txt'.
+%%
+%% Template article for cas-sc documentclass for
+%% double column output.
+
+\documentclass[a4paper,fleqn]{cas-sc}
+
+% If the frontmatter runs over more than one page
+% use the longmktitle option.
+
+%\documentclass[a4paper,fleqn,longmktitle]{cas-sc}
+
+%\usepackage[numbers]{natbib}
+%\usepackage[authoryear]{natbib}
+\usepackage[authoryear,longnamesfirst]{natbib}
+
+%%%Author macros
+\def\tsc#1{\csdef{#1}{\textsc{\lowercase{#1}}\xspace}}
+\tsc{WGM}
+\tsc{QE}
+%%%
+
+% Uncomment and use as if needed
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newdefinition{rmk}{Remark}
+%\newproof{pf}{Proof}
+%\newproof{pot}{Proof of Theorem \ref{thm}}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+% Short title
+\shorttitle{}
+
+% Short author
+\shortauthors{P. Khanal}
+
+% Main title of the paper
+\title [mode = title]{}
+
+% Title footnote (not used yet; an empty one prints a stray mark)
+%\tnotemark[1]
+%\tnotetext[1]{}
+
+% Corresponding author
+\author[1]{Prativa Khanal}
+
+% Corresponding author indication
+\cormark[1]
+
+% Email id of the corresponding author
+\ead{prativakhanal1@gmail.com}
+
+% Credit authorship (to be completed)
+% eg: \credit{Conceptualization of this study, Methodology, Software}
+\credit{}
+
+% Address/affiliation
+\affiliation[1]{organization={Butwal Multiple Campus},
+            city={Butwal},
+            country={Nepal}}
+
+% Corresponding author text
+\cortext[1]{Corresponding author}
+
+% For a title note without a number/mark
+%\nonumnote{}
+
+% Here goes the abstract
+\begin{abstract}
+Enzyme Commission (EC) number predictors such as CLEAN are usually compared using support-weighted precision and F1. We prove that these scores cannot see a predicted EC number that is absent from the test labels, so many wrong predictions are never counted. This scoring is used in the public code of CLEAN, three later methods and the EC-Bench benchmark, and on standard test sets it hides 67--96\% of CLEAN's false positives. When we re-scored the published EC-Bench predictions of 16 methods, the score inflation grew with the number of EC numbers a method predicts, and one published method ranking was significantly reversed. We also built a leakage-controlled benchmark of 2,099 Swiss-Prot enzymes added after CLEAN was trained, and 30\% of them carry an EC number that CLEAN has never seen. On this benchmark, a class-balanced nearest-neighbour rule in CLEAN's embedding space gave a modest but robust pre-registered improvement (union-label macro-F1 +0.043). However, a standard BLASTp search was better than every embedding-based rule (micro-F1 0.73 vs 0.64 for CLEAN), except for distantly related proteins below 30\% sequence identity, where the methods performed similarly. CLEAN's confidence scores were most overconfident for rare EC numbers, and exact binomial calculations show that certifying rare-EC predictions at a 20\% error rate would need at least four times more calibration proteins than are available, which Swiss-Prot would take at least six years to add. We propose an EC evaluation card to make reporting transparent and comparable.
+\end{abstract}
+
+% Use if graphical abstract is present
+%\begin{graphicalabstract}
+%\includegraphics{}
+%\end{graphicalabstract}
+
+% Research highlights
+\begin{highlights}
+\item
+\item
+\item
+\end{highlights}
+
+
+% Keywords
+% Each keyword is seperated by \sep
+\begin{keywords}
+ \sep \sep \sep
+\end{keywords}
+
+\maketitle
+
+% Main text
+\section{}\label{}
+
+% Numbered list
+% Use the style of numbering in square brackets.
+% If nothing is used, default style will be taken.
+%\begin{enumerate}[a)]
+%\item
+%\item
+%\item
+%\end{enumerate}
+
+% Unnumbered list
+%\begin{itemize}
+%\item
+%\item
+%\item
+%\end{itemize}
+
+% Description list
+%\begin{description}
+%\item[]
+%\item[]
+%\item[]
+%\end{description}
+
+\clearpage %%Remove this from your manuscript
+
+
+% Figure
+\begin{figure}%[]
+  \centering
+%    \includegraphics{}
+    \caption{}\label{fig1}
+\end{figure}
+
+
+\begin{table}%[]
+\caption{}\label{tbl1}
+\begin{tabular*}{\tblwidth}{@{}LL@{}}
+\toprule
+  &  \\ % Table header row
+\midrule
+ & \\
+ & \\
+ & \\
+ & \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+% Uncomment and use as the case may be
+%\begin{theorem}
+%\end{theorem}
+
+% Uncomment and use as the case may be
+%\begin{lemma}
+%\end{lemma}
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+%% \appendix
+
+\section{}\label{}
+
+% To print the credit authorship contribution details
+\printcredits
+
+%% Loading bibliography style file
+%\bibliographystyle{model1-num-names}
+\bibliographystyle{cas-model2-names}
+
+% Loading bibliography database
+\bibliography{cas-refs}
+
+% Biography
+%\bio{}
+% Here goes the biography details.
+%\endbio
+
+%\bio{pic1}
+% Here goes the biography details.
+%\endbio
+
+\end{document}

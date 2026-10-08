@@ -28,6 +28,8 @@ biopython 1.83 (added for the identity step with `--no-deps`; nothing else chang
 | Confirmatory run of that commit (your PC, 2026-09-28) | `ALL 10 SMOKE TESTS PASSED`; `FULL PIPELINE FINISHED`; results in PUBLICATION_PLAN §2b |
 | ESM-1b equivalence | PASS: max \|diff\| 1.76e-07, min cosine 1.0000000 (3 New-392 proteins) |
 | Cross-platform check | E5 re-run in a Linux copy reproduces your PC's primary endpoint, rank agreement and ρ exactly |
+| Final run with BLASTp (your PC, 2026-09-28) | smoke 11/11; `FULL PIPELINE FINISHED`; every pre-registered number identical to the confirmatory run; results commit `532bc1f` |
+| After pulling the figure-caption fix | run only `.\cx.bat cx_08_figures.py` (≈30 s; redraws all figures, including the pilot figures figS2/figS3, from the committed results), then `git add results/cleanx/figures`, commit, push |
 
 ### 1.1 Changes after the confirmatory run (none touches a pre-registered endpoint)
 
@@ -147,6 +149,30 @@ git push
 
 Then tell me; I check every table and figure and fill the numbers into PUBLICATION_PLAN.
 
+### Command F — E7 label provenance (needs internet for UniProt; the analysis code must be committed)
+
+The E7 pre-registration is the docstring of `cx_13_provenance.py` (drafted 2026-09-29, finalised 2026-10-07,
+frozen by the commit that added it). The confirmatory run refuses to start if that code differs from the commit.
+
+```bat
+git pull
+.\cx.bat cx_00_check.py
+.\cx_smoke.bat
+.\cx.bat tests\run_tests.py
+.\cx.bat cx_12_uniprot_evidence.py --limit 5
+.\cx.bat cx_12_uniprot_evidence.py
+.\cx.bat cx_13_provenance.py --pilot
+.\cx.bat cx_13_provenance.py
+git add data/cleanx/provenance results/cleanx/E7 results/cleanx/E7_pilot results/cleanx/E7_smoke
+git commit -m "E7 confirmatory run: UniProt evidence and label-provenance results"
+git push
+```
+
+Expected: CX00 9/9, `ALL 13 SMOKE TESTS PASSED`, `ALL 38 TESTS PASSED`; `--limit 5` is a live check (it writes
+`*_limit5` tables the analysis never reads); the full download covers New-392, SP-temporal CAL/TEST and the
+EC-Bench test set (about 2,900 accessions, cached under `data/cleanx/downloads/uniprot_json/`). Send me the pilot
+summary (`results/cleanx/E7_pilot/E7_summary.md`) and the confirmatory output.
+
 ## 3. What has been run and verified
 
 | Step | Script | Status | Output |
@@ -159,7 +185,7 @@ Then tell me; I check every table and figure and fill the numbers into PUBLICATI
 | BLASTp search | `cx_11_blast.py` | ✅ Linux copy, BLAST+ 2.12.0, ≈25 min on 4 threads | `data/cleanx/identity/blast/` |
 | Unit + integration tests (29) | `tests\run_tests.py` | ✅ ALL 29 PASSED (Linux copy) | temporary folders only |
 | Revised figures | `cx_08_figures.py` on your confirmatory results | ✅ Linux copy: every F1 reproduces `E2_metrics_long.csv`; all figures ≤ 7.5 in wide | `results/cleanx/figures/` (your run writes them) |
-| **Final run with BLASTp** | `cx_full.bat` | ⏳ **your Command D** | `results/cleanx/` |
+| **Final run with BLASTp** | `cx_full.bat` | ✅ your PC, commit 532bc1f (audited: only the expected rows changed) | `results/cleanx/` |
 
 ## 4. Individual steps (only if you want to run pieces by hand)
 

@@ -1,0 +1,6 @@
+dataset,eco_code,n_labels
+synthetic,ECO:0000269,105
+synthetic,ECO:0000250,60
+synthetic,ECO:0000255,40
+synthetic,ECO:0000305,20
+synthetic,(none),10
