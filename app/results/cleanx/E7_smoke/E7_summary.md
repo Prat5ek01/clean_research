@@ -2,17 +2,17 @@
 
 - verdict: **BLASTp's advantage holds on experimentally supported labels; no detectable provenance effect (DiD +0.080 [-0.020, +0.190], MDE80 0.143)**
 - gate G7 (n_EXP >= 100, n_PROPAGATED >= 50): passed; closed proteins by class: {'EXP': 100, 'SIM': 60, 'RULE': 40, 'OTHER': 20, 'LABEL_ABSENT': 10}
-- P7a (delta_EXP, micro_F1, n0=100, n1=100): +0.100 [+0.040, +0.170] p=0 q_holm=0 MDE80=0.091
+- P7a (delta_EXP, micro_F1, n0=100, n1=100): +0.100 [+0.040, +0.170] p=<0.0025 q_holm=<0.0025 MDE80=0.091
 - P7b (DiD, micro_F1, n0=100, n1=100): +0.080 [-0.020, +0.190] p=0.105 q_holm=0.105 MDE80=0.143
 - S7a_SIM (DiD, micro_F1, n0=100, n1=60): +0.200 [+0.063, +0.353] p=0.005 q_holm=0.005 MDE80=0.205
-- S7a_RULE (DiD, micro_F1, n0=100, n1=40): -0.100 [-0.170, -0.040] p=0 q_holm=0 MDE80=0.091
-- S7b_delta_EXP (delta_EXP_standardised, micro_F1, n0=100, n1=100): +0.130 [+0.065, +0.221] p=0 MDE80=0.108 (bins <30%+30-50%+50-70%+70-90% (w=0.350), >=90% (w=0.650))
+- S7a_RULE (DiD, micro_F1, n0=100, n1=40): -0.100 [-0.170, -0.040] p=<0.0025 q_holm=<0.0025 MDE80=0.091
+- S7b_delta_EXP (delta_EXP_standardised, micro_F1, n0=100, n1=100): +0.130 [+0.065, +0.221] p=<0.0025 MDE80=0.108 (bins <30%+30-50%+50-70%+70-90% (w=0.350), >=90% (w=0.650))
 - S7b (DiD_standardised, micro_F1, n0=100, n1=100): +0.016 [-0.080, +0.109] p=0.76 MDE80=0.140 (bins <30%+30-50%+50-70%+70-90% (w=0.350), >=90% (w=0.650))
-- S7c_delta_EXP (delta_EXP, samples_F1, n0=100, n1=100): +0.100 [+0.040, +0.170] p=0 MDE80=0.091
+- S7c_delta_EXP (delta_EXP, samples_F1, n0=100, n1=100): +0.100 [+0.040, +0.170] p=<0.0025 MDE80=0.091
 - S7c (DiD, samples_F1, n0=100, n1=100): +0.080 [-0.020, +0.190] p=0.115 MDE80=0.143
-- sensitivity synthetic closed | cluster_bootstrap_rarest_EC: P7a +0.100 [+0.040, +0.170] p=0
+- sensitivity synthetic closed | cluster_bootstrap_rarest_EC: P7a +0.100 [+0.040, +0.170] p=<0.0025
 - sensitivity synthetic closed | cluster_bootstrap_rarest_EC: P7b +0.080 [-0.020, +0.190] p=0.105
-- sensitivity synthetic closed | capped5_per_rarest_EC: P7a +0.100 [+0.040, +0.170] p=0
+- sensitivity synthetic closed | capped5_per_rarest_EC: P7a +0.100 [+0.040, +0.170] p=<0.0025
 - sensitivity synthetic closed | capped5_per_rarest_EC: P7b +0.080 [-0.020, +0.190] p=0.105
 - M7a top hit is a cited source: 40/60 = 0.667 [0.533, 0.783]
 - M7b a cited source is among the kept hits: 50/60 = 0.833 [0.715, 0.917]
