@@ -1,0 +1,6 @@
+measure,what,k,n,n_sim,share,ci_lo,ci_hi,blastp_micro_F1,clean_micro_F1,delta
+M7a,top hit is a cited source,40.0,60,60.0,0.6666666666666666,0.5331273252571693,0.7831305545688296,,,
+M7b,a cited source is among the kept hits,50.0,60,60.0,0.8333333333333334,0.7147807451712972,0.9170711898409363,,,
+M7c,a cited source is a split100 training protein,54.0,60,60.0,0.9,0.7949422632919361,0.962408730891434,,,
+M7d,top hit is a cited source,,40,,,0.0,0.0,0.875,0.875,0.0
+M7d,top hit is not a cited source,,20,,,0.75,1.0,0.9500000000000001,0.05000000000000001,0.9

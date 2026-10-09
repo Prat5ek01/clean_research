@@ -127,6 +127,79 @@ def _blast_path(tmp):
     p.write_bytes(orig)
 
 
+E7_CACHE = textwrap.dedent("""
+    # synthetic UniProt responses for cx_12 --offline: classes cycle EXP, SIM (source = BLAST top hit), RULE, EXP;
+    # the last accession of every set is not in its batch and has a not-found marker
+    import gzip, json
+    import pandas as pd
+    import cx_12_uniprot_evidence as X
+    from cleanx import config, labels as L, provenance as PV
+    codes = {0: ("ECO:0000269", "PubMed", "1"), 2: ("ECO:0000255", "HAMAP-Rule", "MF_00001"),
+             3: ("ECO:0000269", "PubMed", "2")}
+    for name in ("new392", "sp_temporal_cal", "sp_temporal_test"):
+        ids, truth, _ = L.load_named_dataset(name)
+        top = dict(pd.read_csv(config.CX_IDENTITY / f"{name}.csv", dtype=str, keep_default_na=False)[["Entry", "top_hit"]]
+                   .itertuples(index=False, name=None))
+        d = X.JSON_DIR / name
+        d.mkdir(parents=True, exist_ok=True)
+        pos = {i: k for k, i in enumerate(ids)}
+        for chunk, path in X.batches(ids, d):
+            es = []
+            for i in chunk:
+                if i == ids[-1]:
+                    continue
+                k = pos[i] % 4
+                c = ("ECO:0000250", "UniProtKB", top.get(i, "")) if k == 1 else codes[k]
+                es.append(PV.synthetic_entry(i, {e: [c] for e in truth[i]},
+                                             lineage=("Eukaryota" if pos[i] % 3 else "Bacteria",)))
+            path.write_bytes(gzip.compress(json.dumps({"results": es}).encode("utf-8"), mtime=0))
+        (d / f"single_{ids[-1]}.notfound").write_text("HTTP 404\\n", encoding="utf-8")
+    print("E7 CACHE WRITTEN")
+""")
+
+
+def _e7_path(tmp, res):
+    """cx_12 --offline on a synthetic response cache, then cx_13 (confirmatory code path and pilot)."""
+    from cleanx import labels as L
+    from cleanx.metrics import evaluate
+    (tmp / "e7_cache.py").write_text(E7_CACHE, encoding="utf-8")
+    assert "E7 CACHE WRITTEN" in _run(tmp, str(tmp / "e7_cache.py"))
+    out = _run(tmp, "cx_12_uniprot_evidence.py", "--offline", "--sets", "new392", "sp_temporal_cal",
+               "sp_temporal_test")
+    prov = tmp / "data" / "cleanx" / "provenance"
+    ent = pd.read_csv(prov / "sp_temporal_test_entries.csv", dtype=str, keep_default_na=False)
+    ids, truth, _ = L.read_dataset(tmp / "data" / "cleanx" / "sets" / "sp_temporal_test.csv")  # the temp app's set
+    assert list(ent.query_accession) == ids and (ent.found == "False").sum() == 1, out[-600:]
+    assert ent.via.iloc[-1] == "not_found" and set(ent.via.iloc[:-1]) == {"batch"}
+    _run(tmp, "cx_13_provenance.py", "--allow-dirty", "--skip-ecbench", "--bootstrap", "100")
+    run = json.loads((res / "E7" / "E7_run.json").read_text())
+    assert run["label"].startswith(("NOT CONFIRMATORY", "confirmatory @")) and len(run["digests"]) == 5
+    ep = pd.read_csv(res / "E7" / "E7_endpoints.csv")
+    p7a = ep[ep.endpoint == "P7a"].iloc[0]
+    # hand check: EXP proteins are positions 0 and 3 mod 4 among the closed TEST proteins
+    e2 = pd.read_csv(res / "E2_split100" / "E2_per_query.csv", dtype=str, keep_default_na=False)
+    e2 = e2[e2.dataset == "sp_temporal_test"]
+    pos = {i: k for k, i in enumerate(ids)}
+    exp_ids = [i for i, t in zip(e2.Entry, e2.tier) if t != "unseen" and pos[i] % 4 in (0, 3) and i != ids[-1]]
+    tr = {i: L.split_ecs(t) for i, t in zip(e2.Entry, e2.true_EC)}
+    pa = {i: L.split_ecs(p) for i, p in zip(e2.Entry, e2.pred_homology_tophit)}
+    pb = {i: L.split_ecs(p) for i, p in zip(e2.Entry, e2.pred_centroid)}
+    want = evaluate(tr, pa, exp_ids, 4)["micro_F1"] - evaluate(tr, pb, exp_ids, 4)["micro_F1"]
+    assert int(p7a.n0) == len(exp_ids) and abs(p7a.estimate - want) < 1e-12, (p7a.n0, len(exp_ids), p7a.estimate)
+    assert "p_holm" in ep.columns and (ep[ep.endpoint == "S7d"].note.astype(str).str.contains("skipped")).all()
+    mech = pd.read_csv(res / "E7" / "E7_mechanism.csv")
+    m7a = mech[mech.measure == "M7a"].iloc[0]
+    assert m7a.n > 0 and m7a.k == m7a.n  # every SIM label cites the BLASTp top hit as its source
+    comp = pd.read_csv(res / "E7" / "E7_composition.csv")
+    assert set(comp.dataset) == {"sp_temporal_test", "new392", "sp_temporal_cal"}
+    tot = comp[(comp.dataset == "sp_temporal_test") & (comp.subset == "all") & (comp.level == "protein")]
+    assert tot.n.sum() == len(ids) and tot[tot["class"] == "LABEL_ABSENT"].n.iloc[0] >= 1
+    assert "verdict" in (res / "E7" / "E7_summary.md").read_text()
+    _run(tmp, "cx_13_provenance.py", "--pilot", "--bootstrap", "50")
+    pilot = json.loads((res / "E7_pilot" / "E7_run.json").read_text())
+    assert pilot["label"].startswith("PILOT") and pilot["verdict"].startswith(("not confirmatory", "not estimable"))
+
+
 def test_pipeline_end_to_end_on_synthetic_app():
     import synth_app
     before = _snapshot()
@@ -156,6 +229,8 @@ def test_pipeline_end_to_end_on_synthetic_app():
         assert abs(r.delta_obs - (pt.loc["exemplar", "micro_F1"] - pt.loc["centroid", "micro_F1"])) < 1e-12
         tuning = json.loads((res / "E2_split100" / "E2_tuning.json").read_text())
         assert tuning["tuning_set"] == "sp_temporal_cal"
+
+        _e7_path(tmp, res)
 
         _run(tmp, "cx_06_ec_biology.py", "--smoke")
         st = json.loads((res / "E3_split100_smoke" / "E3_stats.json").read_text())

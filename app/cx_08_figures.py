@@ -59,16 +59,18 @@ def style():
 
 
 def note(fig, text):
-    """A caption under everything already drawn (tick labels included), never on top of it, wrapped to the figure
-    width so that it never widens the saved figure beyond a journal page."""
+    """A caption 6 pt under everything drawn in the axes (tick labels, axis labels, axes legends), wrapped to the
+    figure width so that it never widens the saved figure beyond a journal page. The position is resolved when the
+    figure is drawn, by the renderer that saves it, so it holds for any font (Arial on Windows, DejaVu elsewhere)."""
     import textwrap
+    from matplotlib.text import Annotation
+    from matplotlib.transforms import Bbox
     width = int(fig.get_figwidth() * 72 / 3.4)  # characters per line at 6 pt (about 3.4 pt per character)
     text = "\n".join(textwrap.fill(par, width) for par in text.split("\n"))
-    fig.canvas.draw()
-    rend = fig.canvas.get_renderer()
-    y0 = min(ax.get_tightbbox(rend).y0 for ax in fig.axes)
-    y = fig.transFigure.inverted().transform((0, y0))[1]
-    fig.text(0.5, y - 0.015, text, ha="center", va="top", fontsize=6, color=INK2)
+    axes = list(fig.axes)
+    fig.add_artist(Annotation(text, xy=(0.5, 0), xycoords=lambda r: Bbox.union([a.get_tightbbox(r) for a in axes]),
+                              xytext=(0, -6), textcoords="offset points", ha="center", va="top", fontsize=6,
+                              color=INK2, annotation_clip=False))
 
 
 def save(fig, name, table):
@@ -612,9 +614,10 @@ def _reversals(tag, ds):
              (x.metric == "micro_F1")]
 
 
-def fig_ecbench_rescoring():
-    """E5: reported (support-weighted) vs micro F1 for EC-Bench's 16 methods, and inflation vs ECs predicted."""
-    tag = _pick(("E5_cards.csv",), "E5", "E5_pilot")
+def fig_ecbench_rescoring(tag=None):
+    """E5: reported (support-weighted) vs micro F1 for EC-Bench's 16 methods, and inflation vs ECs predicted.
+    tag: results folder; by default the confirmatory E5, else the disclosed pilot."""
+    tag = tag or _pick(("E5_cards.csv",), "E5", "E5_pilot")
     if tag is None:
         return print("  skip fig8: run cx_09_evalcard.py (or --pilot)")
     c = pd.read_csv(config.CX_RESULTS / tag / "E5_cards.csv", dtype={"regime": str})
@@ -627,7 +630,7 @@ def fig_ecbench_rescoring():
     rev = _reversals(tag, ds)
     sig = rev[rev.significant_reversal.astype(bool)] if rev is not None else pd.DataFrame()
     marked = set(sig.A) | set(sig.B) if len(sig) else set()
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.8, 3.0), gridspec_kw={"wspace": 0.55, "width_ratios": [1.15, 1]})
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.5, 3.0), gridspec_kw={"wspace": 0.55, "width_ratios": [1.15, 1]})
     y = np.arange(len(g))
     for yy, r, m in zip(y, g.reported_ECBench_F1, g.u_micro_F1):
         a1.plot([r, m], [yy, yy], color=AXIS, linewidth=1.0, zorder=1)
@@ -675,9 +678,10 @@ def fig_ecbench_rescoring():
          "inflation", "fp", "fp_invisible", "significant_reversal"]])
 
 
-def fig_cert_budget():
-    """E6: calibration proteins needed to certify selective risk, universally and per predicted tier."""
-    tag = _pick(("E6_nstar_grid.csv", "E6_tier_budget.csv"), "E6", "E6_pilot")
+def fig_cert_budget(tag=None):
+    """E6: calibration proteins needed to certify selective risk, universally and per predicted tier.
+    tag: results folder; by default the confirmatory E6, else the disclosed pilot."""
+    tag = tag or _pick(("E6_nstar_grid.csv", "E6_tier_budget.csv"), "E6", "E6_pilot")
     if tag is None:
         return print("  skip fig9: run cx_10_certbudget.py (or --pilot)")
     grid = pd.read_csv(config.CX_RESULTS / tag / "E6_nstar_grid.csv")
@@ -768,6 +772,12 @@ def main():
     fig_reliability()
     fig_ecbench_rescoring()
     fig_cert_budget()
+    # the disclosed pilots (Supplement) are redrawn with the same code whenever the confirmatory results exist
+    if _pick(("E5_cards.csv",), "E5") and _pick(("E5_cards.csv",), "E5_pilot"):
+        fig_ecbench_rescoring("E5_pilot")
+    if _pick(("E6_nstar_grid.csv", "E6_tier_budget.csv"), "E6") and \
+            _pick(("E6_nstar_grid.csv", "E6_tier_budget.csv"), "E6_pilot"):
+        fig_cert_budget("E6_pilot")
     print(f"CX08 DONE -> {config.CX_FIGS}")
 
 

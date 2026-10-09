@@ -1,0 +1,6 @@
+query_accession,primary_accession,ec,codes,sim_sources,model_sources,in_name,in_reaction
+A0A2I6B3P0,A0A2I6B3P0,4.1.1.108,ECO:0000269,,,True,True
+A0A2I6PIZ1,A0A2I6PIZ1,2.-.-.-,ECO:0000269,,,True,False
+A0A2I6PIZ2,A0A2I6PIZ2,1.-.-.-,ECO:0000269,,,True,False
+A0A2I6PIZ6,A0A2I6PIZ6,2.5.1.-,ECO:0000269,,,True,False
+A0A2I6PIZ7,A0A2I6PIZ7,2.5.1.-,ECO:0000269,,,True,False
