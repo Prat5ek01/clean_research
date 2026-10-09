@@ -1,0 +1,26 @@
+{
+  "label": "PILOT on New-392 (development set; descriptive)",
+  "commit": "8b050b63367aadab977f43a379873f8161756425",
+  "dirty": [],
+  "digests": {
+    "cx_13_provenance.py": "b20c1323343745648404250ec26d8c30040b153b195549a8cc52e57087e5d25e",
+    "cleanx/provenance.py": "2ba6a87b1473159beb4113510c2202b09384556a2274889b8003f567bda6dbd0",
+    "cleanx/contrast.py": "6e9cda7466e3729e337ee2716ec975d620a3b4f2c0f5914b9db7ecc2828a0205",
+    "cleanx/metrics.py": "130a00d469bcc7c38056adc1af0294e181214b18166bd2591183cb0131234995",
+    "cleanx/freeze.py": "bead0e9751a6cd6b72f04e32fe2d0d244be4f1156084290969b74c5a57a61629"
+  },
+  "uniprot_releases": [
+    "2026_03"
+  ],
+  "B": 2000,
+  "seed": 20260927,
+  "verdict": "not confirmatory: BLASTp's advantage holds on experimentally supported labels; no detectable provenance effect (DiD +0.060 [-0.016, +0.131], MDE80 0.107)",
+  "gate": true,
+  "counts": {
+    "EXP": 198,
+    "SIM": 133,
+    "RULE": 11,
+    "OTHER": 45,
+    "LABEL_ABSENT": 5
+  }
+}
