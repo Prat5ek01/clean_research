@@ -1,0 +1,5 @@
+backbone,method,subset,n
+synthetic,centroid,all,60
+synthetic,centroid,closed,60
+synthetic,centroid,tier:common,30
+synthetic,centroid,tier:rare,30

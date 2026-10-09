@@ -1,0 +1,2 @@
+backbone,method,subset,n,metric,comparison,B,delta_obs,ci_lo,ci_hi,p_two_sided,p_holm,small_n
+synthetic,centroid,all,60,micro_F1,truth_assisted - first,100,0.5333333333333334,0.39125,0.65875,0.0,,False

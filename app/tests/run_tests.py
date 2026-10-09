@@ -14,7 +14,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 
-MODULES = ["test_metrics_ext", "test_evalcard", "test_certify", "test_blast", "test_integration"]
+MODULES = ["test_metrics_ext", "test_evalcard", "test_certify", "test_blast", "test_drift", "test_integration"]
 
 
 def main():

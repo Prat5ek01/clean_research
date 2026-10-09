@@ -127,6 +127,50 @@ def _blast_path(tmp):
     p.write_bytes(orig)
 
 
+def test_drift_end_to_end_synthetic_only():
+    from cleanx import labels as L
+    from cx_12_drift import synthetic, METHODS
+    before = _snapshot()
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td) / "app"
+        ids, truth, raw, _ = synthetic()
+        sets = tmp / "data" / "cleanx" / "sets"
+        seqs = {q: "ACDEFGHIKLMNPQRSTVWY" for q in ids}
+        L.write_dataset(sets / "sp_temporal_test.csv", ids, truth, seqs)
+        for bb in ("split100", "split70"):
+            L.write_dataset(tmp / "data" / f"{bb}.csv", ids, {q: ["1.1.1.1"] for q in ids}, seqs)
+            for m in METHODS:
+                L.write_pred_csv(tmp / "results" / "cleanx" / "preds" / f"sp_temporal_test_{bb}_{m}_maxsep.csv",
+                                 {q: [(e, None) for e in raw[q]] for q in ids})
+        L.write_pred_csv(tmp / "results" / "cleanx" / "preds" / "sp_temporal_test_homology_tophit.csv",
+                         {q: [(e, None) for e in raw[q]] for q in ids})
+        pd.DataFrame({"accession": ids, "protein_existence": ["Evidence at protein level"] * len(ids)}).to_csv(
+            sets / "sp_temporal_meta.csv", index=False)
+        nom = tmp / "data" / "cleanx" / "downloads" / "enzyme.dat"
+        nom.parent.mkdir(parents=True)
+        nom.write_text("ID   1.1.1.1\nDE   Transferred entry: 1.1.1.2 and 1.1.1.3.\n//\n", encoding="utf-8")
+        ident = tmp / "data" / "cleanx" / "identity" / "sp_temporal_test.csv"
+        ident.parent.mkdir(parents=True)
+        pd.DataFrame({"Entry": ids, "max_pid_short": [0.2, 0.6] * 30}).to_csv(ident, index=False)
+        out = _run(tmp, "cx_12_drift.py", "--posthoc", "--bootstrap", "20")
+        assert "CX12 POSTHOC PASS" in out
+        res = tmp / "results" / "cleanx" / "E7_posthoc"
+        d = pd.read_csv(res / "E7_deltas.csv")
+        assert set(d.backbone) == {"split100", "split70"}
+        assert {"closed_PE1", "closed_capped5", "identity:<30%"} <= set(d.subset)
+        assert d[(d.subset == "all") & (d.metric == "micro_F1")].delta_obs.min() > 0.4
+        man = json.loads((res / "E7_manifest.json").read_text())
+        assert man["status"] == "posthoc" and len(man["files"]) == 15
+        for ext in ("png", "pdf", "csv"):
+            assert (res / f"figE7_drift.{ext}").stat().st_size > 100
+        out = _run(tmp, "cx_12_drift.py", "--smoke")
+        assert "CX12 SMOKE PASS" in out
+        pred = tmp / "results" / "cleanx" / "preds" / "sp_temporal_test_split100_centroid_maxsep.csv"
+        pred.write_text("q00,EC:1.1.1.1\n", encoding="utf-8")
+        assert "ID mismatch" in _run_fail(tmp, "cx_12_drift.py", "--posthoc", "--bootstrap", "20")
+    assert _snapshot() == before, "E7 integration touched real results"
+
+
 def test_pipeline_end_to_end_on_synthetic_app():
     import synth_app
     before = _snapshot()

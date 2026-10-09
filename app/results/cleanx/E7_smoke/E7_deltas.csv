@@ -1,0 +1,13 @@
+backbone,method,subset,n,metric,comparison,B,delta_obs,ci_lo,ci_hi,p_two_sided,p_holm,small_n
+synthetic,centroid,all,60,micro_F1,truth_assisted - first,100,0.5333333333333334,0.39125,0.65875,0.0,,False
+synthetic,centroid,all,60,macro_union_F1,truth_assisted - first,100,0.43572984749455346,0.366672912213547,0.4830581282969134,0.0,,False
+synthetic,centroid,all,60,samples_F1,truth_assisted - first,100,0.5333333333333334,0.39125,0.65875,0.0,,False
+synthetic,centroid,closed,60,micro_F1,truth_assisted - first,100,0.5333333333333334,0.39125,0.65875,0.0,,False
+synthetic,centroid,closed,60,macro_union_F1,truth_assisted - first,100,0.43572984749455346,0.366672912213547,0.4830581282969134,0.0,,False
+synthetic,centroid,closed,60,samples_F1,truth_assisted - first,100,0.5333333333333334,0.39125,0.65875,0.0,,False
+synthetic,centroid,tier:common,30,micro_F1,truth_assisted - first,100,0.5333333333333334,0.39999999999999997,0.6666666666666667,0.0,0.0,False
+synthetic,centroid,tier:common,30,macro_union_F1,truth_assisted - first,100,0.43572984749455346,0.3757971136890729,0.49571547966663243,0.0,0.0,False
+synthetic,centroid,tier:common,30,samples_F1,truth_assisted - first,100,0.5333333333333334,0.39999999999999997,0.6666666666666667,0.0,0.0,False
+synthetic,centroid,tier:rare,30,micro_F1,truth_assisted - first,100,0.5333333333333334,0.39999999999999997,0.6666666666666667,0.0,0.0,False
+synthetic,centroid,tier:rare,30,macro_union_F1,truth_assisted - first,100,0.43572984749455346,0.3757971136890729,0.49571547966663243,0.0,0.0,False
+synthetic,centroid,tier:rare,30,samples_F1,truth_assisted - first,100,0.5333333333333334,0.39999999999999997,0.6666666666666667,0.0,0.0,False

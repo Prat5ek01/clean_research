@@ -1,0 +1,19 @@
+{
+  "protocol_date": "2026-10-04",
+  "status": "synthetic",
+  "seed": 20260927,
+  "B": 100,
+  "policies": [
+    "truth_assisted",
+    "first",
+    "expand",
+    "unambiguous",
+    "identity"
+  ],
+  "primary": "split100 centroid all micro_F1 truth_assisted - first",
+  "files": {},
+  "source_sha256": {
+    "cx_12_drift.py": "d763602789d4b0937a7ba4ff8dc24a9b6c2761a048f39545121fc5fc594492d8",
+    "drift.py": "d507002e035dea3303fcaaa43381a21ce46006a8aa2988598a184383bdba46d9"
+  }
+}

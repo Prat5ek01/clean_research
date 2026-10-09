@@ -1,5 +1,9 @@
 # Publication plan: CLEAN audit and extension for *Computational Biology and Chemistry*
 
+> **2026-10-04 addendum:** E1-E6 are already run; the original user brief predates that run.
+> E7 below is a newly frozen **post hoc** protocol, not an unexposed confirmatory endpoint.
+> The updated literature audit and ranked extension decision are in `RESEARCH_AUDIT_2026-10-04.md`.
+
 > Status: 2026-09-28, updated after the confirmatory run of the pre-registration commit c8e42f7 (results in
 > §2b; post-run changes in §7 and §15). Supersedes the 2026-09-27 version and the direction ranking in
 > `RESEARCH_EXTENSIONS.md`. How to run everything: [`app/cleanx/RUNBOOK.md`](app/cleanx/RUNBOOK.md).
@@ -550,3 +554,46 @@ commit hash · Zenodo DOI for the add-on, accession lists and result CSVs (UniPr
   confidence intervals filled in from the confirmatory CSVs (they do not depend on the BLASTp change).
 - **Dropped earlier:** chemistry-weighted evaluation (EC-Bench), training-space misassignment (multi-EC
   artifact), dispersion-scaled centroids and BIC multi-prototypes (failed pilots).
+
+## 16. E7 protocol frozen 2026-10-04, before computing its results
+
+**Scope and hypothesis.** The existing `labels.harmonize` consults each query's true ECs
+when a historical EC has several terminal successors. H7: that choice changes reported
+performance relative to a deterministic label-blind mapping. Retain the E1-E6 functions,
+endpoints and outputs; this is a separate sensitivity audit.
+
+**ONE primary endpoint:** EC4 micro-F1(truth-assisted) minus micro-F1(lexicographically
+first successor), split100 centroid, all 1,260 temporal TEST enzymes, paired protein
+bootstrap B=2,000, seed 20260927. No policy-dependent exclusions or tuning.
+**Decision:** a CI excluding zero establishes nonzero sensitivity on this cohort. Otherwise
+report magnitude and interval; do not claim equivalence. Zero affected prediction sets
+establishes numerical invariance only for these input files and this transfer release.
+
+**Secondary endpoints:** union-label macro and per-protein F1; split70; frozen exemplar,
+kmean3, balanced3 and BLASTp; all five true tiers (Holm across tiers per model/metric);
+fixed inherited closed subset, training-identity bins, PE1, and cap=5 per rarest true EC.
+Policy stress tests: expand to all terminal successors; abstain on ambiguous/deleted
+labels; retain historical numbers. First/expand retain deleted numbers, preventing a
+silent reduction of false positives. Expansion denotes uncertainty, not promiscuity.
+Closed/tier membership retains E2's counts crediting every transfer successor, and is
+therefore only an inherited comparability definition. Identity bins on split70 still refer
+to split100 training (sensitivity reference), not a new split70 homology search. PE1 means
+protein existence evidence, not experimental validation of enzyme activity.
+
+**Data roles:** New392 development; CAL sole fitting resource (not used by E7); Price149
+and current temporal TEST exposed. All current E7 inference is **post hoc**. A future
+confirmatory replication requires this protocol's commit hash, a new independent cohort
+manifest, and a frozen transfer release before outcomes are opened. A commit now cannot
+restore blindness to the existing TEST set. The CLI deliberately offers only synthetic
+smoke and explicitly labeled post hoc modes, with no future-cohort confirmatory shortcut.
+
+**Commit instruction:** commit this protocol and implementation before any future
+confirmatory run, then cite that hash. No commit or push is made by the assistant.
+
+**Artifacts and gate:** `cx_12_drift.py`, `cleanx/drift.py`; E7 metrics, paired deltas,
+per-query mapping records, subset coverage (including empty strata), SHA256 manifest,
+and `figE7_drift.png/.pdf/.csv`. Missing prediction IDs/inputs fail loudly. Smoke uses
+synthetic data only. Full results live in `E7_posthoc`; never overwrite E1-E6.
+If the effect is negligible, retain this as a validity sensitivity in the Supplement,
+not a new headline contribution. If material, revise the interpretation of affected
+historical scores transparently and report both policies side by side.
