@@ -1,10 +1,6 @@
-"""Paper figures from the E1-E6 outputs. Each figure is written as PNG (300 dpi) + PDF, with a CSV
-of exactly the plotted numbers next to it. Figures whose inputs do not exist yet are skipped.
+"""Render paper figures as PNG, PDF and source CSV.
 
-Every interval drawn is a 95% interval: the paired percentile bootstrap over proteins of cx_05 (B = 2000, seed
-config.SEED) for F1, exact Clopper-Pearson for accuracies and error rates, and the bootstrap interval cx_10 reports
-for the calibration deficit. F1 point estimates are recomputed from E2_per_query.csv and must equal
-E2_metrics_long.csv; a figure is skipped, with the reason printed, rather than drawn from numbers that disagree."""
+Skip missing inputs or F1 estimates that disagree with the stored metrics."""
 import argparse
 import json
 import warnings
@@ -27,8 +23,7 @@ from matplotlib.ticker import MaxNLocator
 from cleanx.metrics import bootstrap, ci, evaluate
 
 INK, INK2, MUTED, GRID, AXIS = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
-# Fixed entity -> colour mapping (validated categorical palette, fixed order, never cycled). The violet slot passes
-# the all-pairs colour-vision check next to blue, orange and aqua (dataviz validator, 2026-09-28).
+# Fixed method colours; colour-vision contrast checked on 2026-09-28.
 METHOD = {"centroid": ("CLEAN centroid", "#2a78d6", "o"),
           "exemplar": ("Exemplar (1-NN)", "#eb6834", "s"),
           "homology_tophit": ("Homology top hit", "#1baf7a", "^"),
@@ -434,7 +429,7 @@ def fig_nise(backbone="split100"):
     d = d[d.dataset.isin(both)]
     fig, ax = plt.subplots(figsize=(1.6 + 1.3 * len(both), 2.4))
     x = np.arange(len(both))
-    # greys: these are EC groups, not methods (orange and blue mean exemplar and centroid in the other figures)
+    # Grey denotes EC groups; method colours are reserved for other figures.
     for k, (grp, col) in enumerate((("NISE-like EC", INK2), ("other EC", MUTED))):
         v = [d[(d.dataset == s) & (d.group == grp)].mean_gain.mean() for s in both]
         ax.bar(x + (k - 0.5) * 0.38, v, width=0.35, color=col, label=grp)

@@ -1,35 +1,6 @@
-"""EC evaluation card: every averaging scheme under both label-space conventions, the false positives each
-one cannot see, and a numerical check of the invariance results below.
+"""Report EC metrics, omitted false positives and label-space invariance checks.
 
-Notation. Proteins i = 1..n with true EC sets T_i and predicted sets P_i (EC strings truncated to the evaluated
-depth). L_T = union of the T_i (the evaluated label set); L_U = union of the T_i and P_i. For a class c:
-TP_c = #{i: c in T_i and P_i}, FP_c = #{i: c in P_i, not T_i}, FN_c = #{i: c in T_i, not P_i}, support
-s_c = TP_c + FN_c, S = sum_c s_c. An out-of-label-set augmentation adds sets A_i with A_i disjoint from L_T.
-
-Proposition 1 (invariance). Under any out-of-label-set augmentation, (TP_c, FP_c, FN_c) is unchanged for every
-c in L_T. Hence every score that depends only on these counts for c in L_T is unchanged, in particular
-  (i)  every averaging (micro, macro, weighted, samples) computed after projecting predictions onto L_T
-       (the protocol of CLEAN's get_eval_metrics, which fits its MultiLabelBinarizer on the test labels), and
-  (ii) the support-weighted and the true-label-macro average computed on L_U (e.g. EC-Bench's scoring),
-       because every class outside L_T has s_c = 0 and therefore weight s_c / S = 0, and is excluded from the
-       true-label macro mean.
-Proof: A_i is disjoint from L_T, so for c in L_T membership of c in P_i is unchanged; for (ii) the classes that
-change all have zero support.
-
-Proposition 2 (sensitivity). If some A_i is non-empty and sum_c TP_c > 0, micro precision on L_U strictly
-decreases; samples-averaged precision strictly decreases if some protein with a correct prediction receives an
-added label; the union-label macro F1 cannot increase, and strictly decreases when it was positive and an added
-class was not yet in L_U (the class enters the mean with F1 = 0; classes outside L_T already had F1 = 0).
-
-Lemma 3. On any label space containing L_T, support-weighted recall equals micro recall
-(sum_c (s_c/S)(TP_c/s_c) = sum_c TP_c / S). The whole difference between the reported and the micro scores is
-therefore on the precision side.
-
-Proposition 4 (over-prediction). Adding a correct label c to P_i raises TP_c and lowers FN_c, so it weakly
-raises P_c, R_c and F1_c; adding a wrong label inside L_T weakly lowers F1_c; adding a wrong label outside L_T
-changes nothing (Prop. 1). Top-k expansion therefore raises the support-weighted F1 whenever its gains in
-recall outweigh the costs of the wrong labels that happen to fall inside L_T, and the smaller L_T is relative to
-the predictor's vocabulary, the larger the share of wrong labels that are free."""
+See docs/code_reference.md#evalcard."""
 import numpy as np
 
 from . import labels as L

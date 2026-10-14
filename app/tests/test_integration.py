@@ -1,9 +1,4 @@
-"""End-to-end integration test on synthetic data: builds a synthetic app in a temporary folder (tests/synth_app.py)
-and runs the real scripts against it through CLEANX_APP_DIR. Covers every new or modified path: cx_04 --pair,
-cx_05 (observed deltas, Holm, sensitivity subsets), cx_06 (d_own / d_other), cx_07 (pure / mixed open set, EC3
-fallback), cx_09 --skip-ecbench and --card, cx_10 (certification budget) and cx_08 (figures, including the
-fallback to pilot results when the confirmatory folder is incomplete). Never touches the real data/
-or results/ folders (checked)."""
+"""Exercise the analysis scripts against a temporary synthetic app."""
 import json
 import os
 import subprocess

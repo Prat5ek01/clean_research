@@ -1,29 +1,6 @@
-"""E2: does the single-centroid-per-EC assumption limit CLEAN? Same frozen embeddings, different
-inference geometry, all with CLEAN's max-separation rule:
-  centroid   CLEAN (one mean per EC)
-  exemplar   per-EC 1-NN
-  kmean3     local mean of the 3 nearest members (LMKNN)
-  multiproto silhouette-gated k-means sub-prototypes
-  balanced1/balanced3  exemplar / kmean3 x n_c**lambda (equal-prior kNN density), lambda tuned on
-             the calibration split only (--tune-on), never on a test set
+"""Compare inference rules in frozen CLEAN embeddings (E2).
 
-Pre-registered endpoints (fixed 2026-09-27, before any sp_temporal_test result existed). Only
-metrics that count every false positive are used (E1 shows support-weighted and true-label macro
-scores rise when a method over-predicts):
-  primary   macro-F1 over the union label space (EC depth 4), balanced3 vs centroid, sp_temporal_test,
-            proteins whose ECs are all in CLEAN's vocabulary ('closed'), paired bootstrap, two-sided
-  secondary micro-F1 for the same comparison; per-true-EC-tier micro-F1 differences
-
-Reporting and sensitivity analyses added 2026-09-28, before any sp_temporal_test result existed (the primary and
-secondary endpoints above are unchanged):
-  - every delta row also carries delta_obs, the observed full-sample difference (reported as the effect; the
-    bootstrap mean 'delta' is biased for macro-averaged metrics); per-tier rows carry p_holm (Holm across tiers)
-  - closed|cluster_bootstrap_EC: the same comparisons with proteins resampled in clusters of their rarest true
-    EC (proteins sharing an EC share a centroid, so the protein bootstrap is anti-conservative)
-  - closed_capped<k>: at most k proteins per rarest true EC (seeded sample; --cap-per-ec, default 5)
-  - closed_cal_disjoint: TEST proteins below 50% identity to every CAL protein (needs
-    cx_04_identity.py --pair sp_temporal_test:sp_temporal_cal)
-  - closed_PE1: temporal proteins with UniProt evidence at protein level"""
+See docs/analysis_protocols.md#cx-05-geometry."""
 import argparse
 import time
 import warnings
@@ -232,7 +209,7 @@ def main():
                 r["p_holm"] = float(ph)
         d_rows += tier_rows
 
-        # sensitivity analyses (pre-registered 2026-09-28; see module docstring)
+        # Sensitivity analyses: docs/analysis_protocols.md (registered 2026-09-28).
         cl = rarest_ec(ev, idx)
         sens = {"closed|cluster_bootstrap_EC": (primary, cl)}
         cap_ids = capped(primary, cl, args.cap_per_ec, args.seed)

@@ -57,7 +57,7 @@ def test_accession_resolution():
            for q in ("P1", "S1", "S2", "M1", "M2", "D1", "Q0")}
     assert got == {"P1": "P1/primary", "S1": "-/absent", "S2": "P2/secondary", "M1": "P2/merged",
                    "M2": "-/inactive:MERGED", "D1": "-/inactive:DELETED", "Q0": "-/absent"}, got
-    # the later copy of P1 (without secondary accessions) is the one indexed: S1 is unknown and S2 is claimed by P2 only
+    # The later P1 replaces its aliases: S1 is unknown; only P2 claims S2.
     idx2 = PV.index_entries(entries[:2])
     assert PV.resolve("S2", idx2) == (None, "ambiguous_secondary") and PV.resolve("S1", idx2)[1] == "secondary"
 

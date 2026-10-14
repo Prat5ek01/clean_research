@@ -1,29 +1,6 @@
-"""Label provenance (E7): how was each benchmark EC label on a UniProtKB entry asserted?
+"""Parse UniProt EC evidence and resolve accessions without network access.
 
-UniProtKB attaches Evidence and Conclusion Ontology (ECO) codes to every annotation. For an EC number the evidence
-is the union of the codes on that EC in the protein description (recommended, alternative and submission names,
-including 'includes'/'contains' domains) and on CATALYTIC ACTIVITY reactions that carry that EC:
-  ECO:0000269  experimental evidence used in manual assertion
-  ECO:0000250  sequence similarity evidence used in manual assertion ('by similarity'); its source names the
-               protein the annotation was propagated from (source 'UniProtKB', id = accession)
-  ECO:0000255 / ECO:0000256 / ECO:0000259  match to a sequence model (e.g. a HAMAP rule) used in manual /
-               automatic assertion
-Everything else (e.g. ECO:0000305 curator inference, ECO:0000303 author statement, imported annotations, no code)
-is OTHER.
-
-Classes (fixed in the E7 pre-registration, cx_13_provenance.py):
-  EC level      EXP if any ECO:0000269; else SIM if any ECO:0000250; else RULE if any sequence-model code;
-                else OTHER
-  protein level LABEL_ABSENT if the entry was not found or any benchmark label is not an EC on the current entry;
-                else SIM if any label is SIM; else EXP if every label is EXP; else RULE if any label is RULE;
-                else OTHER. SIM and RULE together are the labels propagated by homology (PROPAGATED).
-
-Accession resolution: an active entry whose primary accession is the query; else the single active entry that
-lists the query as a secondary accession (more than one such entry: 'ambiguous_secondary', not found); else an
-inactive entry for the query that was merged into exactly one active entry present in the responses ('merged');
-otherwise not found ('inactive:<reason>' or 'absent').
-
-This module parses the UniProt REST JSON (uniprotkb entries) into flat tables; it never downloads anything."""
+See docs/code_reference.md#provenance."""
 import gzip
 import json
 from pathlib import Path

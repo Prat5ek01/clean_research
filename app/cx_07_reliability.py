@@ -1,25 +1,6 @@
-"""E4: reliability. Is CLEAN's released confidence calibrated across rarity tiers, and can
-tier-conditional (Mondrian) risk control give certified abstention per tier, including on
-unseen-EC enzymes and non-enzymes?
+"""Evaluate calibration, selective risk and hierarchical fallback (E4).
 
-Top-1 prediction per protein under each inference geometry (centroid = CLEAN; exemplar; balanced3
-with the lambda E2 tuned on the calibration split).
-- calibration: CLEAN's GMM confidence as released; isotonic maps fitted on the calibration split
-  (global, and per tier of the predicted EC); ECE/Brier on the test sets
-- risk control: SGR thresholds (Geifman & El-Yaniv 2017) on the raw distance, global vs one
-  threshold per predicted-EC tier (delta split by Bonferroni); realized risk/coverage on test
-- open set: share of unseen-EC enzymes and non-enzymes abstained at the certified thresholds;
-  AUROC of each score for seen-EC enzymes vs non-enzymes
-- hierarchical fallback: when EC4 abstains, emit the EC3 prefix if its own certified threshold passes
-
-Changes recorded 2026-09-28, before any SP-temporal result existed:
-- unseen-EC enzymes are split into 'pure' (no true EC in CLEAN's vocabulary: abstaining is the right answer) and
-  'mixed' (at least one true EC is in the vocabulary, so a correct call exists; e.g. proteins annotated with both
-  1.14.99.54 and 1.14.99.56); abstention is reported for both, plus accuracy among accepted mixed calls
-- the EC3 fallback threshold is certified on the calibration proteins that the EC4 rule rejects, the population it
-  is applied to (it was certified on all calibration proteins before, which does not cover the rejected subset)
-Reporting added 2026-09-28 after the confirmatory run (no decision changes): every realized selective risk carries its
-error count and an exact 95% Clopper-Pearson interval."""
+See docs/analysis_protocols.md#cx-07-reliability."""
 import argparse
 import time
 import warnings

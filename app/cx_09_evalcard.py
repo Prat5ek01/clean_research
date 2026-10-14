@@ -1,44 +1,6 @@
-"""E5: does the reported EC metric change conclusions across the field? (evaluation card + EC-Bench re-scoring)
+"""Generate EC evaluation cards and rescore EC-Bench predictions (E5).
 
-PRE-REGISTRATION (written 2026-09-28, before any EC-Bench metric other than the reported one was computed; the
-only EC-Bench numbers computed before this text were the reproduction gate below).
-
-Data. EC-Bench (Davoudi et al. 2026, doi:10.1093/bioadv/vbag004, MIT licence) publishes the predictions of 16 EC
-predictors, commit 5e98a2c (cleanx/ecbench.py): its test set (468 proteins) and Price-149, for models trained on
-its 100%- and 30%-identity clusterings. Labels are parsed exactly as in EC-Bench's own scoring code.
-Gate. Our re-implementation must reproduce EC-Bench's printed support-weighted F1 (EC levels 1 and 4, test set,
-100% regime, all 16 methods) to 1e-9; otherwise the run stops with FAIL.
-Theory. Props. 1-4 in cleanx/evalcard.py: scores computed after projecting predictions onto the test label set,
-and support-weighted / true-label-macro scores on any label space, cannot see false positives on EC numbers that
-are absent from the evaluated labels; support-weighted recall equals micro recall.
-
-H5 (primary). On the EC-Bench test set (100% regime, EC level 4) at least one pair of methods is ordered one way
-by the reported metric (support-weighted F1, EC-Bench's scoring) and significantly the other way by micro-F1.
-Primary endpoint: the number of such pairs among the 120, where "significantly" = two-sided paired-bootstrap p
-(B = 2000 resamples of proteins, seed 20260927) with Benjamini-Hochberg adjustment across the 120 pairs,
-q < 0.05, and the bootstrap median agrees in sign with the observed micro-F1 difference.
-Secondary. (S1) the same count with union-label macro-F1 and with per-protein F1; (S2) Kendall tau-b between
-the method rankings under the reported metric and each metric that counts every false positive, with a
-bootstrap 95% CI; (S3) the share of each method's false positives that the reported metric cannot see;
-(S4) Spearman rho between inflation (reported F1 - micro-F1) and mean predicted ECs per protein; (S5) S1-S4 for
-the 30% regime, EC levels 1-3, and Price-149 (disclosed: Price-149 was used as the pilot, --pilot); (S6)
-complete-EC-only sensitivity (tokens containing '-' dropped); (S7) after the full run, the invisible share of
-CLEAN max-separation false positives on SP-temporal TEST, expected below New-392's 0.67 because its label set is
-larger (Prop. 4).
-Decision rules. >= 1 significant reversal: C1 becomes "the blind spot changes method comparisons in a published
-benchmark". No reversal but tau-b < 1: "rankings largely preserved; reported precision inflated by X". tau-b = 1
-and no reversal: report the benchmark as robust and keep C1 to CLEAN's own benchmarks and gameability.
-
-AMENDMENT (2026-09-28, after the disclosed Price-149 pilot, before any scoring of the EC-Bench test set beyond
-the gate). Pilot: rho(inflation, ECs/protein) = 0.94 (100% regime) and 0.93 (30%); 7 directional but no
-significant reversals among 120 pairs (n = 149). Therefore S4 becomes the key secondary endpoint with a
-directional hypothesis (rho > 0, one-sided alpha = 0.05, test set, 100% regime, EC level 4). The primary
-endpoint is unchanged; the pilot suggests it may be underpowered, and a null result will be reported as such.
-
-Modes: default (confirmatory, downloads the EC-Bench files at the pinned commit), --pilot (EC-Bench Price-149
-only; writes E5_pilot), --smoke (synthetic EC-Bench-format data + New-392 CLEAN predictions; writes E5_smoke),
---card TRUTH PREDS (evaluation card for any prediction file; writes E5_card/E5_card_<name>.csv, outside the
-confirmatory E5 folder)."""
+See docs/analysis_protocols.md#cx-09-evalcard."""
 import argparse
 import itertools
 import sys

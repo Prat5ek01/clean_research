@@ -1,9 +1,4 @@
-"""Unit and integration tests for cleanx (plain Python; pytest is not needed).
-
-Run from app\\:   .\\cx.bat tests\\run_tests.py            (unit + integration, ~2-4 min)
-                 .\\cx.bat tests\\run_tests.py --unit-only
-Prints [PASS]/[FAIL] per test and ALL <n> TESTS PASSED at the end; exits 1 on any failure. The integration test
-builds a synthetic app in a temporary folder and never writes into data/ or results/ of this repository."""
+"""Run unit and synthetic integration tests with cx.bat; --unit-only skips integration."""
 import importlib
 import sys
 import time

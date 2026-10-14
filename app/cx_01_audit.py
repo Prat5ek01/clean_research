@@ -1,11 +1,4 @@
-"""E1: evaluation validity of the CLEAN baseline.
-
-- every averaging scheme at EC depth 1-4, with paired bootstrap CIs
-- the support-weighted 'blind spot' (false positives on ECs outside the evaluated label set)
-- tier x depth breakdown (reproduces app/audit_out/maxsep_tier_x_depth.csv for New-392)
-- exact-sequence leakage between test sets and split100
-- EC label drift of the legacy benchmarks against current Swiss-Prot (needs cx_02 --with-pfam table)
-"""
+"""Audit CLEAN metrics, false positives, sequence overlap and label drift (E1)."""
 import argparse
 import time
 import warnings

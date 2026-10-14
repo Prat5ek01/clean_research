@@ -1,14 +1,8 @@
-"""BLASTp homology baseline and sequence identity (NCBI BLAST+), the baseline used by CLEAN and by EC-Bench.
+"""Run reproducible BLASTp searches and reduce hits for baseline evaluation.
 
-Search: blastp with default scoring (BLOSUM62, gap 11/1, composition-based statistics), E-value <= 10, up to
-MAX_TARGET_SEQS subjects per query, against CLEAN's split100 training sequences. Per query, the hits are reduced
-to the KEEP best by bit score plus the hit with the highest identity over the shorter sequence; that keeps both
-quantities cx_04 needs exactly (top hit, max identity) while the stored tables stay small. Kept lines are written
-exactly as BLAST printed them, gzipped without a timestamp (byte-identical on re-runs).
+Rank hits by bit score, E-value and accession. Identity uses the shorter sequence.
 
-Top hit = highest bit score; ties broken by lower E-value, then subject accession (deterministic).
-pid_short = identical residues / length of the shorter sequence, maximised over all HSPs (conservative against
-short local hits; same definition as the Python fallback in cleanx/identity.py)."""
+See docs/code_reference.md#blast."""
 import gzip
 import hashlib
 from pathlib import Path

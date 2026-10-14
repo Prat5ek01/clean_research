@@ -1,25 +1,8 @@
-"""E7 data: UniProtKB evidence behind the EC labels of the benchmark proteins (label provenance).
+"""Download and cache UniProt EC evidence for E7.
 
-For every protein of New-392 (development set), SP-temporal CAL and TEST, and the EC-Bench test set, download the
-current UniProtKB entry (REST API, JSON) and record, for each EC number on the entry, the ECO evidence codes and
-the accessions cited by 'by similarity' (ECO:0000250) evidence (cleanx/provenance.py). No model output is read:
-this script only describes the labels. The analysis is cx_13_provenance.py.
+Use --offline to parse cached responses without network access.
 
-Download: accessions in batches of 100 through the UniProtKB stream endpoint (query 'accession:A OR accession:B
-...', format=json, gzip); accessions a batch does not resolve are fetched one by one from the single-entry endpoint;
-an inactive entry that was merged into one other entry is followed to that entry. Accessions are resolved by the
-rules in cleanx/provenance.py (primary, unique secondary, merged); the rest are recorded as not found. Responses
-are cached under data/cleanx/downloads/uniprot_json/<set>/ (batch files are named by the SHA-256 of their
-accession list, so a changed set never reuses a stale response) and every cached file, the UniProt release it came
-from and the counts are recorded with SHA-256 digests in data/cleanx/provenance/manifest.json. Runs on a machine
-with internet access (the analysis PC); --offline re-parses the cache without any network.
-
-Outputs: data/cleanx/provenance/<set>_entries.csv (one row per queried accession) and <set>_ec_evidence.csv (one
-row per EC on the entry: codes, similarity sources, where the EC was found).
-
-Modes: default (download missing responses, then parse), --offline (parse the cache only), --smoke (parser
-known-answer checks on synthetic entries; no network), --limit N (first N accessions per set, for a live check;
-writes <set>_limit<N> tables that the analysis never reads)."""
+See docs/code_reference.md#cx-12-uniprot-evidence."""
 import argparse
 import datetime as _dt
 import gzip

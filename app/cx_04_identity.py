@@ -1,14 +1,8 @@
-"""Max sequence identity of each evaluation protein to CLEAN's split100 training set, plus the
-homology-transfer baseline (EC of the best alignment hit).
+"""Compute training-set identity and homology-transfer predictions.
 
---tool python : 3-mer prefilter + Smith-Waterman (Biopython) on the 30 best candidates, runs anywhere
---tool blast  : NCBI BLASTp tables from cx_11_blast.py (the paper's baseline, as in CLEAN and EC-Bench); refuses to
-                run unless the local sequences are exactly the ones searched (SHA-256 digests in the manifest)
---tool m8     : parse MMseqs2 results
---write-fasta : write split100 + query FASTAs for running MMseqs2 elsewhere
---pair Q:T    : max identity of every protein of set Q to set T (e.g. sp_temporal_test:sp_temporal_cal), written
-                to data/cleanx/identity/Q_vs_T.csv; used by cx_05 for the CAL-disjoint TEST sensitivity analysis
-                (sequences only: no prediction or label of either set is used)"""
+Use --tool blast for the paper baseline; --pair Q:T computes cross-set identity.
+
+See docs/code_reference.md#cx-04-identity."""
 import argparse
 import time
 import warnings

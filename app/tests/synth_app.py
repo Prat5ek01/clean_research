@@ -1,9 +1,4 @@
-"""Builds a small synthetic app/ folder (data + weights) in a temporary directory so the real cx_* scripts can run
-end to end without CLEAN's weights, ESM-1b or any download. Nothing here reads or writes the real repository data.
-
-The world is coherent: training ESM vectors are clustered by EC, 100.pt is those vectors passed through a
-(randomly initialised, seeded) CLEAN LayerNormNet saved as split100.pth, and query vectors lie near their EC's
-centre, so max-separation, calibration and risk control have something real to find."""
+"""Build a temporary synthetic app with data and weights for integration tests."""
 import csv
 import gzip
 import json
