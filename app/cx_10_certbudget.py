@@ -1,38 +1,6 @@
-"""E6: certification budget. How many calibration proteins does each rarity tier need before CLEAN's rare-EC
-calls can be accepted with a certified selective risk, and how long does Swiss-Prot take to supply them?
+"""Estimate model-based calibration budgets by predicted rarity tier (E6).
 
-PRE-REGISTRATION (written 2026-09-28, before any SP-temporal CAL or TEST feature existed).
-Setting. Top-1 predictions of CLEAN (centroid geometry), score = -distance, groups = tier of the predicted EC,
-Mondrian SGR with delta = 0.1 split over the 4 groups (as in cx_07_reliability.py). The budget n_needed(tier,
-alpha) is the smallest number of calibration proteins in the tier for which the exact binomial power of certifying
-selective risk alpha, at the most favourable coverage on a 0.1-0.9 grid and with SGR's per-test delta, reaches
-0.8 (cleanx/certify.py). Selective risks at each coverage are estimated on SP-temporal CAL only, as the Jeffreys
-posterior mean (errors + 0.5) / (accepted + 1), using only coverages with >= 10 accepted calibration proteins
-(set after the disclosed pilot showed raw 0/2-0/5 error counts driving the budget). Because the coverage is
-chosen with hindsight, n_needed is a lower bound on what SGR's own threshold search needs, which makes
-"n_needed > n_available" a conservative claim. A tier with no usable coverage is reported as not estimable,
-distinct from not certifiable (every usable coverage has risk >= alpha).
-H6 (primary). For alpha = 0.2, n_needed exceeds the number of CAL proteins available in the very-rare and in the
-singleton predicted tiers. Primary endpoint: the calibration deficit (n_needed - n_available) per predicted tier,
-with a bootstrap 95% CI (1000 resamples of the tier's CAL proteins; resamples that cannot certify count as
-infinite).
-Secondary. (a) alpha = 0.1 and 0.3; (b) exemplar and balanced3 geometries; (c) years of Swiss-Prot accrual the
-deficit represents: yearly number of new Swiss-Prot enzymes passing the benchmark filters, 2022-03-01 to the
-UniProt release date, times the tier's share of CAL predictions; (d) the universal curve n*(r, alpha, delta');
-(e) a simulation check that SGR certifies at the budgeted size with about the targeted probability; (f) after E4,
-the realized per-tier certification on TEST compared with the budget's prediction.
-Decision rules. Deficit CI above 0 in the rare tiers: C4 reports "rare-EC calls cannot be certified with the
-calibration data that exist; they need N proteins, about Y years of curation, or tier pooling / hierarchical
-abstention". Deficit <= 0: certification is feasible with current data (G-B expected positive).
-
-Reporting changes 2026-09-28, after the confirmatory run (no estimate or decision changes): a bootstrap quantile that
-falls between two non-certifiable (infinite) resamples is reported as inf (numpy's interpolation returned NaN); the
-years of accrual at the deficit's lower 95% bound are added (years_at_deficit_ci_lo), since the point estimate of the
-deficit is unstable when a tier is close to not certifiable.
-
-Modes: default (confirmatory; needs results/cleanx/E4/E4_features_cal_<geometry>.csv from the full run),
---pilot (New-392 half used as calibration in the E4 smoke run; disclosed pilot; writes E6_pilot),
---smoke (synthetic features and known-answer checks; writes E6_smoke)."""
+See docs/analysis_protocols.md#cx-10-certbudget."""
 import argparse
 import math
 import sys

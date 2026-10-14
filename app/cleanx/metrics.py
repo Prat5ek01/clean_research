@@ -1,10 +1,7 @@
-"""Multi-label EC metrics with an explicit label space.
+"""Multi-label EC metrics with explicit label spaces.
 
-'weighted' reproduces the number CLEAN reports (sklearn support-weighted average over classes).
-Classes that are predicted but have no true instance get weight 0 there, so false positives on EC
-numbers absent from the evaluated set's labels never reduce it; 'macro_true' (mean over classes
-with a true instance) shares that blind spot. Both can be raised by over-predicting. 'micro',
-'macro_union' (mean over true + predicted classes) and 'samples' count every prediction."""
+Weighted and true-label macro scores omit zero-support classes; micro,
+union-label macro and per-protein scores count all predictions."""
 import numpy as np
 from scipy import sparse
 

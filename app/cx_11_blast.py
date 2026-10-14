@@ -1,23 +1,6 @@
-"""BLASTp (NCBI BLAST+) for the identity strata and the homology-transfer baseline.
+"""Run BLASTp and verify sequence digests for the homology baseline.
 
-Why. The Python fallback in cleanx/identity.py aligns only the 30 best 3-mer candidates per query and has no
-E-value. CLEAN's paper and EC-Bench use BLASTp as the homology baseline, and RUNBOOK section 4 (committed with the
-pre-registration, c8e42f7) planned to replace the fallback with a standard aligner for the paper's numbers. This
-changes a comparator and the identity strata; no pre-registered endpoint uses either.
-
-Search (cleanx/blast.py): blastp, default scoring (BLOSUM62, gap 11/1, composition-based statistics), E-value <= 10,
-up to 500 subjects per query; database = CLEAN's split100 training sequences; queries = New-392, Price-149,
-SP-temporal CAL and TEST; plus TEST against a CAL database for the CAL-disjoint sensitivity subset. Per query the
-10 best hits by bit score and the maximum-identity hit are kept (data/cleanx/identity/blast/<set>.tsv.gz).
-manifest.json records the BLAST version, the exact commands, the parameters and SHA-256 digests of every sequence
-set and output file. cx_04_identity.py --tool blast refuses to use a table whose sequences differ from local data.
-
-BLAST+ may be blocked by Application Control on the analysis PC, so the search runs wherever BLAST+ is installed
-(done in a Linux copy of the environment) and the tables are committed; the PC only verifies and parses them.
-
-Modes: default (search everything; needs blastp), --verify (digests of local data and of the stored tables against
-the manifest; no BLAST needed; PASS/FAIL), --smoke (verify, then, if blastp is available, re-search 5 New-392
-queries and require the same top hit, bit score and maximum identity as the stored table; otherwise SKIP)."""
+See docs/code_reference.md#cx-11-blast."""
 import argparse
 import json
 import shutil

@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 
-# CLEANX_APP_DIR lets the integration tests run the real scripts against a synthetic app folder in a temp
-# directory; unset (always, in normal use) it is this repository's app/ folder.
+# Tests can override the app directory with CLEANX_APP_DIR.
 APP_DIR = Path(os.environ.get("CLEANX_APP_DIR") or Path(__file__).resolve().parents[1])
 DATA_DIR = APP_DIR / "data"
 PRETRAINED_DIR = DATA_DIR / "pretrained"

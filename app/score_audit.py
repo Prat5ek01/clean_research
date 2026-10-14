@@ -1,20 +1,8 @@
-"""
-Stage C scorer for the CLEAN audit.
+"""Score CLEAN predictions by EC depth and training-frequency tier.
 
-Reads:
-  - ground truth        (data/new.csv        : tab-separated Entry / EC number / Sequence)
-  - CLEAN predictions   (results/new_maxsep.csv)
-  - EC frequency index  (data/ec_train_frequency.csv)
+Defaults to results/new_maxsep.csv; use --preds and --tag for other predictions.
 
-Reports multi-label precision / recall / F1 broken down by:
-  (a) EC digit depth   1 -> 4   (does it get the family but miss the reaction?)
-  (b) rarity tier      common -> singleton -> unseen
-  (c) both together    (the core audit table)
-
-Usage:
-    python score_audit.py
-    python score_audit.py --preds results/new_pvalue.csv --tag pvalue
-"""
+See docs/code_reference.md#score-audit."""
 
 import argparse
 import os

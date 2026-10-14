@@ -1,13 +1,6 @@
-"""Paired method contrasts within strata of proteins, and differences between strata (E7, E10).
+"""Paired method contrasts and independently resampled stratum differences.
 
-delta(S) = metric(method A) - metric(method B) on the proteins of stratum S; both methods are scored on the same
-proteins, so the bootstrap keeps them paired. The difference-in-differences DiD = delta(S1) - delta(S0) compares
-two disjoint strata; its bootstrap resamples each stratum independently (a stratified bootstrap).
-
-Identity standardisation (direct standardisation) re-weights the per-bin deltas of every stratum to one common bin
-distribution w (the pooled distribution of the strata compared): delta_std(S) = sum_b w_b delta(S, b). Bins too
-sparse to estimate are merged first by a fixed rule (merge_bins). Its bootstrap resamples every (stratum, bin) cell
-independently, so no cell can be empty in a resample."""
+Identity standardisation uses pooled bin weights and resamples each stratum/bin."""
 import numpy as np
 
 from . import metrics as M

@@ -1,73 +1,6 @@
-"""E7: label provenance. Is BLASTp's advantage over CLEAN on SP-temporal a property of the methods, or partly of how
-the benchmark's EC labels were assigned?
+"""Compare BLASTp and CLEAN by EC-label provenance (E7).
 
-PRE-REGISTRATION (drafted 2026-09-29, finalised 2026-10-07, before any UniProt evidence had been downloaded for
-any benchmark protein).
-The analysis code (this file, cleanx/provenance.py, cleanx/contrast.py, cleanx/metrics.py) is frozen by committing
-it; the confirmatory run refuses to start from uncommitted code (cleanx/freeze.py). Known when this was written:
-the overall and per-identity-bin TEST results of C3 (BLASTp top hit 0.735 vs CLEAN 0.641 micro-F1 on the 876 closed
-TEST proteins; confirmatory run of 2026-09-28). Not known: the provenance of any label, the class sizes, and every
-class-specific result.
-
-Background. Swiss-Prot curators assign many EC numbers by transferring them from a characterised homolog ('by
-similarity', ECO:0000250, which cites the source protein) or from a family rule such as HAMAP (ECO:0000255). A
-homology-transfer predictor re-enacts that process, so on such labels part of its agreement with the benchmark is
-built in (circularity). Only labels with experimental evidence (ECO:0000269) test prediction against a reference that
-was not itself derived from sequence similarity.
-
-Data. Current UniProtKB entries of the benchmark proteins (cx_12_uniprot_evidence.py; one release, recorded in
-data/cleanx/provenance/manifest.json). Predictions and truth from the confirmatory E2 run
-(results/cleanx/E2_split100/E2_per_query.csv: pred_homology_tophit = BLASTp top hit against split100, pred_centroid
-= CLEAN; ENZYME transfers applied as in E2). BLASTp tables in data/cleanx/identity/. Price-149 is not included: its
-proteins are not UniProtKB entries and its labels come from mutant fitness experiments.
-Classes (cleanx/provenance.py). EC level: EXP (ECO:0000269) > SIM (ECO:0000250) > RULE (ECO:0000255, ECO:0000256,
-ECO:0000259) > OTHER. Protein level: LABEL_ABSENT if the entry is not found or any benchmark label is not an EC on
-the current entry; else SIM if any label is SIM; else EXP if every label is EXP; else RULE if any label is RULE;
-else OTHER. PROPAGATED = SIM or RULE (labels transferred by homology).
-Population. SP-temporal TEST proteins whose true ECs are all in CLEAN's vocabulary (closed; n = 876).
-
-Primary endpoints (one family of two, Holm). EC depth 4, micro-F1, paired bootstrap over proteins, B = 2000.
-  P7a  delta_EXP = micro-F1(BLASTp) - micro-F1(CLEAN) on the closed EXP proteins; two-sided; seed 20260927.
-  P7b  DiD = delta_PROPAGATED - delta_EXP; EXP and PROPAGATED proteins resampled independently (seeds 20260927 and
-       20260928); two-sided.
-Gate G7. The primaries are confirmatory only if n_EXP >= 100 and n_PROPAGATED >= 50; otherwise every E7 result is
-descriptive. Effects are observed full-sample differences with 95% percentile intervals; MDE80 = 2.80 x bootstrap SE.
-
-Secondary (CIs reported; no claim beyond the primaries).
-  S7a  DiD for SIM and for RULE separately (Holm over the two).
-  S7b  identity-standardised P7a and P7b: per-bin deltas over the five BLASTp identity bins (maximum identity to
-       split100), weighted by the pooled EXP + PROPAGATED bin distribution; bins with fewer than 10 proteins in either
-       class are merged by the fixed rule in cleanx/contrast.merge_bins; every (class, bin) cell resampled
-       independently.
-  S7c  P7a and P7b with mean per-protein F1 instead of micro-F1.
-  S7d  EC-Bench test set (100% regime; proteins whose EC-Bench labels are all complete ECs; classes from the same
-       UniProt download against EC-Bench's labels): DiD for blastp - clean-supcon, micro-F1 at depth 4 (seeds as in
-       P7b); descriptive unless n_EXP >= 30 and n_PROPAGATED >= 30.
-Mechanism (closed TEST SIM proteins). Share whose BLASTp top hit is a protein cited as the source of one of their SIM
-labels (M7a), whose cited source is among the kept BLASTp hits (M7b), or is a split100 training protein (M7c), with
-exact 95% CIs; BLASTp and CLEAN micro-F1 when the top hit is a cited source and when it is not (M7d).
-Sensitivity. P7a and P7b with (a) proteins resampled in clusters of their rarest true EC (as in E2), (b) at most 5
-proteins per rarest true EC (seeded sample, as in E2).
-Descriptive. Class composition of New-392, SP-temporal CAL and TEST and EC-Bench test; ECO code frequencies; deltas
-by class x identity bin and class x superkingdom. LABEL_ABSENT and OTHER are reported, never pooled with a class.
-Interpretation (fixed in advance; q = Holm-adjusted p, alpha = 0.05):
-  G7 fails                               -> descriptive only.
-  P7a q<.05, delta>0 and P7b q>=.05      -> BLASTp's advantage holds on experimentally supported labels; no
-                                            detectable provenance effect (report the DiD CI and MDE80).
-  P7a q<.05, delta>0 and P7b q<.05, DiD>0 -> the advantage holds on experimental labels and is larger on propagated
-                                            labels; the provenance-matched estimate is delta_EXP.
-  P7a q>=.05 and P7b q<.05, DiD>0         -> the advantage is concentrated in propagated labels and is not
-                                            significant on experimental labels; C3's BLASTp advantage is qualified.
-  P7a q>=.05 and P7b q>=.05              -> no significant difference on experimental labels and no detectable
-                                            provenance effect.
-  a significant negative effect          -> reported as such (CLEAN better on experimental labels, or a smaller
-                                            BLASTp advantage on propagated labels).
-Pilot. New-392 (development set) through the same code (--pilot). It may change parsing and class rules, as a dated
-amendment recorded here before the confirmatory run; it may not change the endpoints.
-
-Modes: default (confirmatory; committed code required), --pilot (New-392; writes E7_pilot), --smoke (synthetic data
-with known answers; writes E7_smoke), --allow-dirty (development and tests only: outputs are labelled NOT
-CONFIRMATORY)."""
+See docs/analysis_protocols.md#cx-13-provenance."""
 import argparse
 import sys
 import tempfile
@@ -116,7 +49,6 @@ def check(name, ok, detail=""):
     return ok
 
 
-# ----------------------------------------------------------------------------------------------- inputs
 def read_provenance(tag):
     """(entries DataFrame, {query: {ec: [codes]}}, {query: {ec: [source accessions]}}) from cx_12's tables."""
     e_path, c_path = PROV_DIR / f"{tag}_entries.csv", PROV_DIR / f"{tag}_ec_evidence.csv"
@@ -190,7 +122,6 @@ def blast_context(dataset):
     return top, kept, train
 
 
-# ----------------------------------------------------------------------------------------------- analysis
 def capped(ids, cluster, k, seed):
     """At most k proteins per cluster, chosen with a fixed seed; order of ids kept (same rule as E2)."""
     rng = np.random.default_rng(seed)
@@ -393,7 +324,6 @@ def ecbench_secondary(B, seed):
     return rows, comp, code_rows("ecbench_test", ids, truth, codes), gate
 
 
-# ----------------------------------------------------------------------------------------------- real data
 def load_dataset(dataset):
     ids, truth, preds, tier, ibin = load_e2(dataset)
     ent, codes, sources = read_provenance(dataset)
@@ -453,7 +383,6 @@ def write_all(out, res, extra_comp, extra_codes, header):
     (out / "E7_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-# ----------------------------------------------------------------------------------------------- smoke
 CELLS = {  # (class, identity bin): (n proteins, BLASTp correct, CLEAN correct); single label, single prediction
     ("EXP", "<30%"): (50, 35, 35), ("EXP", ">=90%"): (50, 45, 35),
     ("SIM", "<30%"): (10, 5, 5), ("SIM", ">=90%"): (50, 49, 31),
@@ -578,7 +507,6 @@ def smoke(out, B):
     write_all(out, res, [], [], "# E7 summary (SMOKE: synthetic data)")
 
 
-# ----------------------------------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bootstrap", type=int, default=2000)

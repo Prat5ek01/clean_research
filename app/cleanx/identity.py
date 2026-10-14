@@ -1,8 +1,6 @@
-"""Maximum sequence identity of query proteins to the CLEAN training set, and a homology-transfer
-baseline (EC of the best local-alignment hit).
+"""Compute sequence identity and best-hit EC transfer.
 
-pid_short = identical aligned residues / length of the shorter sequence (conservative against short
-local hits); pid_aln = identical / alignment columns (MMseqs2 'fident')."""
+pid_short uses the shorter sequence; pid_aln uses alignment columns."""
 import time
 
 import numpy as np

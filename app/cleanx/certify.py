@@ -1,21 +1,8 @@
-"""Certification budget for selective risk control: how many calibration proteins does a group (e.g. a rarity
-tier of the predicted EC) need before a rule with selective risk <= alpha can be certified?
+"""Compute fixed-operating-point binomial power and calibration budgets.
 
-Exact binomial facts used (one-sided Clopper-Pearson bound UCB, as in calibration.binom_ucb):
-  duality:   UCB(k, n, delta) < alpha  <=>  P[X <= k] < delta  for X ~ Bin(n, alpha)
-  hence      k_max(n) = min{k : P[X <= k] >= delta} - 1   is the largest certifiable number of errors
-             (-1 = nothing certifiable at this n);
-  power:     if the n accepted calibration proteins have true selective risk r, the rule is certified with
-             probability power(n; r) = P[K <= k_max(n)], K ~ Bin(n, r);
-  r = 0:     power = 1 as soon as 1 - delta**(1/n) < alpha, i.e. n > ln(delta) / ln(1 - alpha);
-  r >= alpha: power -> 0 as n grows (not certifiable at any budget).
-power(n; r) is not monotone in n (binomial saw-tooth), so n_first is the smallest n reaching the target and
-n_stable the smallest n after which it never drops below the target again (up to n_max); budgets use n_stable.
-SGR (Geifman & El-Yaniv 2017) tests ceil(log2 m) thresholds on m calibration points with delta/ceil(log2 m) each,
-and the per-group (Mondrian) version splits delta over G groups, so a group certifies with per-test
-delta' = delta / (G * ceil(log2 m)); group budgets are solved as a fixed point in m. The budget assumes the
-accepted fraction (coverage c) is fixed in advance at its oracle threshold; cx_10 checks by simulation how
-close SGR's own threshold search comes to it."""
+Budgets use the stable power crossing within a finite search window.
+
+See docs/code_reference.md#certify."""
 import math
 
 import numpy as np

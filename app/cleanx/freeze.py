@@ -1,10 +1,4 @@
-"""Pre-registration guard: a confirmatory run must use analysis code that is committed, unchanged.
-
-code_state(paths) asks git whether any of the given files differs from HEAD or is untracked (a file outside the
-repository never counts as committed). Scripts call require_frozen() before a confirmatory run: it stops with a
-message unless the code is committed, and --allow-dirty (development and tests only) turns the stop into a loud
-label that is written into every output of that run. digests(paths) gives the SHA-256 of every analysis file; the
-scripts write them into their outputs so that a run can be matched to a commit afterwards, with or without git."""
+"""Require committed analysis code for confirmatory runs and record its digests."""
 import hashlib
 import subprocess
 from pathlib import Path

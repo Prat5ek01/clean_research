@@ -1,20 +1,6 @@
-"""E3: why the centroid assumption fails - EC classes whose training members split into
-non-homologous groups (no shared Pfam clan; candidate non-homologous isofunctional enzymes, NISE).
+"""Analyse EC geometry and non-homologous Pfam-clan groups (E3).
 
-Per-EC geometry from CLEAN's training embeddings (split100 or split70):
-  loo_misassign = share of members closer to another EC's centroid than to their own
-                  leave-one-out centroid; rms_radius = within-EC spread.
-Per-EC biology from current Swiss-Prot Pfam annotations of the same training accessions:
-  clan groups = connected components of members linked by a shared Pfam clan (a family without
-                a clan counts as its own clan); nise_like = >=2 groups each covering >=20% of the
-                Pfam-annotated members.
-E3b (--write-nise-fasta, cx_03_embed.py --sets nise_members, then --subgroups): are those
-subgroups separate clusters in CLEAN space, i.e. is the single EC centroid between them?
-
-Added 2026-09-28: mean_margin = mean(d_other - d_own) is not independent of rms_radius (a larger spread raises
-d_own and so lowers the margin mechanically). The two components are therefore tested separately:
-mean_d_own (distance of members to their own leave-one-out centroid: "dispersed") and mean_d_other (distance to
-the nearest other, non-co-annotated centroid: "crowded")."""
+See docs/analysis_protocols.md#cx-06-ec-biology."""
 import argparse
 import json
 import time
